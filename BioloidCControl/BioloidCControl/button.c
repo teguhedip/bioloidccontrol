@@ -21,8 +21,8 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "global.h"
 #include <util/delay.h>
+#include "global.h"
 #include "button.h"
 #include "buzzer.h"
 
