@@ -18,13 +18,13 @@
  * to be responsible for all resulting costs and damages.
  */
 
+#include <util/delay.h>
+#include <stdio.h>
 #include "global.h"
 #include "pose.h"
 #include "motion.h"
 #include "dynamixel.h"
 #include "clock.h"
-#include <util/delay.h>
-#include <stdio.h>
 
 // global hardware definition variables
 extern const uint8 AX12_IDS[NUM_AX12_SERVOS];
@@ -207,7 +207,7 @@ void motionPageInit()
 	motion_pointer[123] = (uint8*) &MotionPage123; 
 	motion_pointer[124] = (uint8*) &MotionPage124; 
 	motion_pointer[125] = (uint8*) &MotionPage125; 
-	motion_pointer[126] = (uint8*) &MotionPage126; 
+/*	motion_pointer[126] = (uint8*) &MotionPage126; 
 	motion_pointer[127] = (uint8*) &MotionPage127; 
 	motion_pointer[128] = (uint8*) &MotionPage128; 
 	motion_pointer[129] = (uint8*) &MotionPage129; 
@@ -306,7 +306,7 @@ void motionPageInit()
 	motion_pointer[222] = (uint8*) &MotionPage222; 
 	motion_pointer[223] = (uint8*) &MotionPage223; 
 	motion_pointer[224] = (uint8*) &MotionPage224; 
-	motion_pointer[225] = (uint8*) &MotionPage225; 
+	motion_pointer[225] = (uint8*) &MotionPage225; */
 }
 
 // This function unpacks a motion stored in program memory (Flash) 
@@ -350,7 +350,7 @@ void unpackMotion(int StartPage)
 			CurrentMotion.StepValues[s][3*i+1] = packed_step_values & 0x3FF;
 			packed_step_values = packed_step_values >> 11;
 			CurrentMotion.StepValues[s][3*i] = packed_step_values & 0x3FF;
-			printf("%i %i %i", CurrentMotion.StepValues[s][3*i], CurrentMotion.StepValues[s][3*i+1], CurrentMotion.StepValues[s][3*i+2] );
+			printf("%i %i %i ", CurrentMotion.StepValues[s][3*i], CurrentMotion.StepValues[s][3*i+1], CurrentMotion.StepValues[s][3*i+2] );
 		}
 	}
 

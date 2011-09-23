@@ -25,10 +25,12 @@
  * to be responsible for all resulting costs and damages.
  */
 
-#include "global.h"			// contains basic hardware defines
 #include <avr/io.h>
 #include <stdio.h>
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h>
+#include <util/delay.h>
+#include "global.h"			// contains basic hardware defines
 #include "buzzer.h"
 #include "button.h"
 #include "led.h"
@@ -38,21 +40,19 @@
 #include "pose.h"
 #include "motion_f.h"
 #include "clock.h"
-#include <avr/pgmspace.h>
-#include <util/delay.h>
 
 // Array showing which Dynamixel servos are enabled (ID from 0 to 25)
 #ifdef HUMANOID_TYPEA
-const uint8 AX12Servos[MAX_AX12_SERVOS] = {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0}; 
-const uint8 AX12_IDS[NUM_AX12_SERVOS] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18};
+  const uint8 AX12Servos[MAX_AX12_SERVOS] = {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0}; 
+  const uint8 AX12_IDS[NUM_AX12_SERVOS] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18};
 #endif
 #ifdef HUMANOID_TYPEB
-const uint8 AX12Servos[MAX_AX12_SERVOS] = {0,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0}; 
-const uint8 AX12_IDS[NUM_AX12_SERVOS] = {1,2,3,4,5,6,7,8,11,12,13,14,15,16,17,18};
+  const uint8 AX12Servos[MAX_AX12_SERVOS] = {0,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0}; 
+  const uint8 AX12_IDS[NUM_AX12_SERVOS] = {1,2,3,4,5,6,7,8,11,12,13,14,15,16,17,18};
 #endif
 #ifdef HUMANOID_TYPEC
-const uint8 AX12Servos[MAX_AX12_SERVOS] = {0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0}; 
-const uint8 AX12_IDS[NUM_AX12_SERVOS] = {1,2,3,4,5,6,9,10,11,12,13,14,15,16,17,18};
+  const uint8 AX12Servos[MAX_AX12_SERVOS] = {0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0}; 
+  const uint8 AX12_IDS[NUM_AX12_SERVOS] = {1,2,3,4,5,6,9,10,11,12,13,14,15,16,17,18};
 #endif
 
 // set some execution parameters
@@ -98,7 +98,6 @@ volatile int16 current_pose[NUM_AX12_SERVOS];
 volatile uint8 current_motion_page = 0;
 volatile uint8 last_motion_page = 0;
 
-
 // the new implementation of AVR libc does not allow variables passed to _delay_ms
 static inline void delay_ms(uint16 count) {
 	while(count--) { 
@@ -110,18 +109,21 @@ static inline void delay_ms(uint16 count) {
 int main(void)
 {
 	// Initialization Routines
-	led_init();			// switches all 6 LEDs on
-	buzzer_init();
-	button_init();
-	serial_init(57600);	// serial port at 57600 baud
+	led_init();				// switches all 6 LEDs on
+	delay_ms(200);			// wait 0.2s 
+	led_off(ALL_LED);		// and switch them back off
+
+	serial_init(57600);		// serial port at 57600 baud
+	sei();
+	printf("\nSerial Init complete.\n");
+
+	// buzzer_init();		// enable buzzer melodies
+	button_init();			// enable push buttons on CM-510
 	
-	// wait 0.5s before switching LEDs off
-	for (uint8 i=1; i<=50 ; i++) { _delay_ms(10); }
-	led_off(ALL_LED);
 	// initialize the ADC and take default readings
 	adc_init();
 	// initialize the clock
-	//clock_init();
+	clock_init();
 	
 	// enable interrupts
 	sei();
@@ -162,7 +164,7 @@ int main(void)
 	unpackMotion(23);
 
 	// write out the command prompt
-	printf(	"Ready for command.\n> ");
+	printf(	"\nReady for command.\n> ");
 
 	// main loop
     while(1)
@@ -177,7 +179,7 @@ int main(void)
 			led_on(LED_MANAGE | LED_TXD);
 			
 			// play melody 1
-			buzzer_playFromProgramSpace(melody1);
+			//buzzer_playFromProgramSpace(melody1);
 			
 			// execute a motion - Bow
 			//executeMotionSequence(1);
@@ -191,7 +193,7 @@ int main(void)
 			led_on(LED_AUX | LED_PLAY);
 			
 			// play melody 2
-			buzzer_playFromProgramSpace(melody2);
+			//buzzer_playFromProgramSpace(melody2);
 			
 			// execute a motion - Bravo
 			//executeMotionSequence(2);
@@ -205,7 +207,7 @@ int main(void)
 			led_on(LED_MANAGE | LED_PROGRAM | LED_PLAY);
 			
 			// play melody 3
-			buzzer_playFromProgramSpace(melody3);
+			//buzzer_playFromProgramSpace(melody3);
 			
 			// execute a motion - Rap chest
 			//executeMotionSequence(5);
@@ -219,7 +221,7 @@ int main(void)
 			led_on(LED_TXD | LED_RXD | LED_AUX);
 			
 			// play melody 4
-			buzzer_playFromProgramSpace(melody4);
+			//buzzer_playFromProgramSpace(melody4);
 			
 			// execute a motion - Sit Down
 			//executeMotionSequence(25);

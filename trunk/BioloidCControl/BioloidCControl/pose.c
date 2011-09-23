@@ -18,12 +18,12 @@
  * to be responsible for all resulting costs and damages.
  */
 
-#include "dynamixel.h"
-#include "global.h"
-#include "pose.h"
-#include "clock.h"
 #include <util/delay.h>
 #include <stdio.h>
+#include "global.h"
+#include "pose.h"
+#include "dynamixel.h"
+#include "clock.h"
 
 // global hardware definition variables
 extern const uint8 AX12Servos[MAX_AX12_SERVOS]; 

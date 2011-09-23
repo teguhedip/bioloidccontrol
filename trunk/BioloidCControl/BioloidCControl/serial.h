@@ -26,9 +26,9 @@ extern "C" {
 //#define	ZIG_2_SERIAL
 
 #ifdef	SERIAL_CABLE
-#define MAXNUM_SERIALBUFF	128 // maximum 128byte string (cable)
+  #define MAXNUM_SERIALBUFF	128 // maximum 128byte string (cable)
 #else
-#define MAXNUM_SERIALBUFF	256 // maximum 256byte string (Zig2Serial)
+  #define MAXNUM_SERIALBUFF	256 // maximum 256byte string (Zig2Serial)
 #endif
 #define DEFAULT_BAUDRATE	34  // 57132(57600)bps
 
@@ -45,13 +45,14 @@ extern "C" {
 //        Suspect this is related to the RS-232 level converter and/or a line
 //        buffer, but if it really were, shouldn't this pin be an output
 //        instead of an input?  
-#define ZIG110_ENABLE	PORTD &= ~0x80; PORTD &= ~0x20; PORTD |= 0x40
-
+#ifdef ZIG_2_SERIAL
+  #define ZIG110_ENABLE	PORTD &= ~0x80; PORTD &= ~0x20; PORTD |= 0x40
 // Going by the CM-5/CM-700 schematic on the Robotis support site
 // ZIG-100 power/reset control is PORTD PIN4 and should be an output
-#define ZIG110_RESET	DDRC|=0x10; PORTD|=0x10; _delay_ms(10); PORTD&=~0x10
-#define ZIG110_DOWN		DDRC|=0x10; PORTD|=0x10
-#define ZIG110_UP		DDRC|=0x10; PORTD&=~0x10
+  #define ZIG110_RESET	DDRC|=0x10; PORTD|=0x10; _delay_ms(10); PORTD&=~0x10
+  #define ZIG110_DOWN		DDRC|=0x10; PORTD|=0x10
+  #define ZIG110_UP		DDRC|=0x10; PORTD&=~0x10
+#endif
 
 // Command List
 #define NUMBER_OF_COMMANDS				20	// how many commands we recognize

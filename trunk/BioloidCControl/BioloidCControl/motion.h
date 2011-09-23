@@ -4893,7 +4893,7 @@ struct //
  {987275543,3121508913,1502925307,2164959914,1008237191,1578097156}}, 
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
-
+/*
 struct // BL_S_L 
 { 
    const uint8 JointFlexibility[18]; 
@@ -5531,8 +5531,8 @@ struct // Clap end
 {{987275543,3121508913,1502925307,2164959914,1008237191,1578097156}}, 
 {0}, {1000} 
 }; 
-
+*/
 // Number of active motion pages in this file 
-const uint8 ACTIVE_MOTION_PAGES = 225; 
+const uint8 ACTIVE_MOTION_PAGES = 199; 
 
 #endif /* MOTION_H_ */

@@ -18,6 +18,7 @@
 #include "global.h"
 #include "serial.h"
 
+
 // Command Strings List - kept in Flash to conserve RAM
 const char COMMANDSTR0[]  PROGMEM = "STOP";
 const char COMMANDSTR1[]  PROGMEM = "WF  ";
@@ -61,8 +62,8 @@ extern volatile uint8 last_motion_page;			// last motion page (might still be in
 // internal function prototypes
 void serial_put_queue( unsigned char data );
 unsigned char serial_get_queue(void);
-int std_putchar(char c);
-int std_getchar(void);
+int std_putchar(char c,  FILE* stream);
+int std_getchar( FILE* stream );
 
 
 // ISR for serial receive, Serial Port/ZigBEE use USART1
@@ -78,14 +79,16 @@ SIGNAL(USART1_RX_vect)
 		flag_receive_ready = 1;
 		serial_put_queue( 0xFF );
 		c = '\n';
-		std_putchar(c);
+		std_putchar(c, device);
+		// test
+		std_putchar(' ', device);
 	} 
 	else
 	{
 		// put each received byte into the buffer until full
 		serial_put_queue( c );
 		// echo the character
-		std_putchar(c);
+		std_putchar(c, device);
 	}
 }
 
@@ -330,7 +333,7 @@ unsigned char serial_get_queue(void)
 
 // writes a single character to the serial port
 // newline is replaced with CR+LF
-int std_putchar(char c)
+int std_putchar(char c,  FILE* stream)
 {
 	char tx[2];
 	
@@ -351,7 +354,7 @@ int std_putchar(char c)
 
 // get a single character out of the read buffer
 // wait for byte to arrive if none in the buffer
-int std_getchar(void)
+int std_getchar( FILE* stream )
 {
     char rx;
 	
