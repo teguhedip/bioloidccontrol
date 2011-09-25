@@ -23,14 +23,36 @@
 #include "global.h"
 #include "pose.h"
 #include "motion.h"
+#include "motion_f.h"
 #include "dynamixel.h"
 #include "clock.h"
+
+// define the possible states for executeMotionSequence
+#define STEP_IN_MOTION		1
+#define STEP_IN_PAUSE		2
+#define STEP_FINISHED		3
+#define PAUSE_FINISHED		4
+#define	PAGE_FINISHED		5
+#define MOTION_ALARM		6
+#define MOTION_STOPPED		7
+#define ROBOT_SLIPPED		8
+
+// and create the variables that guide these functions
+uint8 motion_state = 0;					// motion state as per above definitions
+unsigned long pause_start_time = 0;		// millis() at start of pause time
+uint8 current_step = 0;					// number of the current motion page step
+
+// Global variables related to the finite state machine that governs execution
+extern volatile uint8 bioloid_command;			// current command
+extern volatile uint8 last_bioloid_command;		// last command
 
 // global hardware definition variables
 extern const uint8 AX12_IDS[NUM_AX12_SERVOS];
 extern const uint8 AX12Servos[MAX_AX12_SERVOS];
 // global variable that keeps the current motion page
 extern uint8 current_motion_page;
+// should keep the current pose in a global array
+extern int16 current_pose[NUM_AX12_SERVOS];
 
 // table of pointers to the motion pages
 uint8 * motion_pointer[NUM_MOTION_PAGES+1];
@@ -207,7 +229,7 @@ void motionPageInit()
 	motion_pointer[123] = (uint8*) &MotionPage123; 
 	motion_pointer[124] = (uint8*) &MotionPage124; 
 	motion_pointer[125] = (uint8*) &MotionPage125; 
-/*	motion_pointer[126] = (uint8*) &MotionPage126; 
+	motion_pointer[126] = (uint8*) &MotionPage126; 
 	motion_pointer[127] = (uint8*) &MotionPage127; 
 	motion_pointer[128] = (uint8*) &MotionPage128; 
 	motion_pointer[129] = (uint8*) &MotionPage129; 
@@ -281,7 +303,7 @@ void motionPageInit()
 	motion_pointer[197] = (uint8*) &MotionPage197; 
 	motion_pointer[198] = (uint8*) &MotionPage198; 
 	motion_pointer[199] = (uint8*) &MotionPage199; 
-	motion_pointer[200] = (uint8*) &MotionPage200; 
+/*	motion_pointer[200] = (uint8*) &MotionPage200; 
 	motion_pointer[201] = (uint8*) &MotionPage201; 
 	motion_pointer[202] = (uint8*) &MotionPage202; 
 	motion_pointer[203] = (uint8*) &MotionPage203; 
@@ -309,6 +331,56 @@ void motionPageInit()
 	motion_pointer[225] = (uint8*) &MotionPage225; */
 }
 
+// This function executes robot motions consisting of one or more motion 
+// pages defined in motion.h
+// It implements a finite state machine to know what it is doing and what to do next
+// Code is meant to be reentrant so it can easily be converted to a task with a RTOS
+void executeMotionSequence()
+{
+	uint8 moving_flag;
+	int error_status, comm_status;
+	
+	// check the states in order of likelihood of occurrence
+	// the most likely state is that a motion step is still being executed or paused
+	if ( motion_state == STEP_IN_MOTION )
+	{
+		// last state was step in motion - check if finished
+		moving_flag = checkMotionStepFinished();
+		// finished, update motion state
+		if ( moving_flag == 0 ) {
+			motion_state = STEP_FINISHED;
+		}
+	} else if( motion_state == STEP_IN_PAUSE ) {
+		// check if we still need to wait for pause time to expire
+		if ( (millis()-pause_start_time) >= CurrentMotion.PauseTime[current_step] )
+		{
+			// pause is finished, update state
+			motion_state = PAUSE_FINISHED;
+		}
+	}
+	
+	// Next we check for any movement related alarms - at this point the only way the
+	// motion state can be STEP_FINISHED is because it was changed above
+	if ( motion_state == STEP_FINISHED )
+	{
+		// check that executing the last step didn't cause any alarms
+		for (uint8 i=0; i<NUM_AX12_SERVOS; i++) {
+			// ping the servo and unpack error code (if any)
+			error_status = dxl_ping(AX12_IDS[i]);
+			if(error_status != 0) {
+				// there has been an error, disable torque
+				comm_status = dxl_write_word(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
+				printf("\nexecuteMotionSequence Alarm ID%i - Error Code %i\n", AX12_IDS[i], error_status);
+				return;
+			}
+		}	
+		// all ok, read back current pose
+		readCurrentPose();	
+	}
+	
+
+}
+
 // This function unpacks a motion stored in program memory (Flash) 
 // in a struct stored in RAM to allow execution
 // StartPage - number of the motion page to be unpacked
@@ -333,10 +405,8 @@ void unpackMotion(int StartPage)
 	// now we are ready to unpack the Step Values 
 	// 3 values are packed into one 32bit integer - so use pgm_read_word twice
 	num_packed_steps = NUM_AX12_SERVOS / 3;
-	printf("\nUnpack Motion Page # %i - %i packed values", StartPage, num_packed_steps);
 	for (s=0; s<CurrentMotion.Steps; s++)
 	{
-		printf("\nStep %i: ",s+1);
 		for (i=0; i<num_packed_steps; i++)
 		{
 			// higher 16bit
@@ -350,7 +420,6 @@ void unpackMotion(int StartPage)
 			CurrentMotion.StepValues[s][3*i+1] = packed_step_values & 0x3FF;
 			packed_step_values = packed_step_values >> 11;
 			CurrentMotion.StepValues[s][3*i] = packed_step_values & 0x3FF;
-			printf("%i %i %i ", CurrentMotion.StepValues[s][3*i], CurrentMotion.StepValues[s][3*i+1], CurrentMotion.StepValues[s][3*i+2] );
 		}
 	}
 
@@ -429,7 +498,7 @@ int executeMotion(int StartPage)
 			// take the time
 			pre_step_time = millis();
 			// execute each pose 
-			moveToGoalPose(CurrentMotion.PlayTime[s], goalPose);
+			moveToGoalPose(CurrentMotion.PlayTime[s], goalPose, 0);
 			// store the time
 			step_times[s] = millis() - pre_step_time;
 			
@@ -449,22 +518,22 @@ int executeMotion(int StartPage)
 	return (int) CurrentMotion.NextPage;	
 }
 
-// This function executes a robot motion consisting of one or more motion 
-// pages defined in motion.h
-// StartPage - number of the first motion page in the motion
-void executeMotionSequence(int StartPage)
+// Function to check for any remaining servo movement
+// Returns:  (int)	number of servos still moving
+int checkMotionStepFinished()
 {
-	int	NextPage;
+	uint8 moving_flag;
 	
-	// set up the sequence
-	NextPage = StartPage;
-	do 
-	{
-		// execute next motion page in the sequence
-		NextPage = executeMotion(NextPage);
+	// reset the flag
+	moving_flag = 0;
 		
-	} while (NextPage != 0); // until no further pages
+	for (int i=0; i<NUM_AX12_SERVOS; i++) {
+		// keep reading the moving state of servos 
+		moving_flag += dxl_read_byte( AX12_IDS[i], DXL_MOVING );
+	}		
+	return moving_flag;
 }
+
 
 // This function executes the exit page motion for the  
 // current motion page

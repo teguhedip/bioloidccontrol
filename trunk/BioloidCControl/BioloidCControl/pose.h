@@ -38,10 +38,13 @@ void waitForPoseFinish();
 void calculatePoseServoSpeeds(uint16 time);
 
 // Moves from the current pose to the goal pose
-// using interpolation of steps and delay between steps
+// using calculated servo speeds and delay between steps
 // to achieve the required step timing (actual play time)
-// play time is expected in ms
-void moveToGoalPose(uint16 time, uint16 goal[]);
+// Inputs:  (uint16)  allocated step time in ms
+//          (uint16)  array of goal positions for the actuators
+//          (uint8)   flag = 0 don't wait for motion to finish
+//					  flag = 1 wait for motion to finish and check alarms
+void moveToGoalPose(uint16 time, uint16 goal[], uint8 wait_flag);
 
 // Assume default pose (Balance - MotionPage 224)
 void moveToDefaultPose(void);

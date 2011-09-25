@@ -55,10 +55,14 @@ extern "C" {
 	#define	NUM_MOTION_PAGES	227
 #endif
 
-
 // Dynamixel configuration definitions 
 #define MAX_AX12_SERVOS		26
 #define MAX_MOTION_STEPS	7
+
+// Top level ADC/Sensor related parameters - adjust as needed
+#define SENSOR_READ_INTERVAL	100		// read gyro/DMS every 100ms 
+#define BATTERY_READ_INTERVAL	1000	// read battery once every second
+#define GYROX_SLIP_ERROR		200		// deviation from center interpreted as a slip
 
 // Standard types
 typedef uint8_t		uint8;

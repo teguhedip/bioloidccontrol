@@ -55,7 +55,7 @@ extern "C" {
 #endif
 
 // Command List
-#define NUMBER_OF_COMMANDS				20	// how many commands we recognize
+#define NUMBER_OF_COMMANDS				22	// how many commands we recognize
 #define COMMAND_STOP					0
 #define COMMAND_WALK_FORWARD			1
 #define COMMAND_WALK_BACKWARD			2
@@ -76,13 +76,17 @@ extern "C" {
 #define COMMAND_SIT						17
 #define COMMAND_BALANCE					18
 #define COMMAND_MOTIONPAGE				19
+#define COMAND_FRONT_GET_UP				20
+#define COMAND_BACK_GET_UP				21
 #define COMMAND_NOT_FOUND				255
 
 // Top level serial port task
 // manages all requests to read from or write to the serial port
 // Receives commands from the serial port and writes output (excluding printf)
 // Checks the status flag provided by the ISR for operation
-void SerialReceiveCommand();
+// Returns:  int flag = 0 when no new command has been received
+//           int flag = 1 when new command has been received
+int SerialReceiveCommand();
 
 // Serial Port initialization with the specified baud rate
 void serial_init(long baudrate);

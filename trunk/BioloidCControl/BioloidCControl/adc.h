@@ -33,23 +33,19 @@
 #ifndef ADC_H_
 #define ADC_H_
 
-#include <avr/io.h>
-#include "global.h"
-
 #define MODE_8_BIT		1
 #define MODE_10_BIT		0
 
 
-// Interrupt enable/disable macros
-#define ENABLE_ADC_INTERRUPT()	TIMSK3 = (1<<OCIE3A)
-#define DISABLE_ADC_INTERRUPT()	TIMSK3 = 0
-
 // initialization routine
 void adc_init(void);
 
-// function that enables the interrupt based sensor loop
-// Input: Interval between readings in ms
-void adc_enableSensorLoop(uint8 interval_ms);
+// function that reads all the sensors from the main loop
+// SENSOR_READ_INTERVAL in global.h determines how often the sensors are read
+// BATTERY_READ_INTERVAL in global.h determines how often the battery voltage is read
+// Returns:  int flag = 0 when no new values have been read
+//           int flag = 1 when new values have been read
+int adc_readSensors();
 
 // set the ADC to 8 or 10 bit mode
 // Input: Mode (MODE_8_BIT or MODE_10_BIT)
