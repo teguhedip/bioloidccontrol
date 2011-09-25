@@ -33,8 +33,11 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "adc.h"
 #include <util/delay.h>
+#include <avr/io.h>
+#include "global.h"
+#include "adc.h"
+#include "clock.h"
 
 #define DMSTablePoints	11	// number of entries in DMS conversion table 
 
@@ -46,40 +49,58 @@ extern volatile uint16 adc_gyrox_center;	 // gyro x center value
 extern volatile uint16 adc_gyroy_center;	 // gyro x center value
 
 uint16 millivolt_calibration = 5000;	// contains default VCC in millivolts
-uint8 adc_read_battery = 0;				// flag for reading battery voltage
 
 // Tables to convert DMS values to distance in cm
 // Values are from actual measurements, not the diagram in the e-manual
 const uint16 DMSTableValues[DMSTablePoints]=
 {70, 80, 95, 115, 150, 175, 205, 245, 310, 455, 625};
-const uint8 DMSTableCM[DMSTablePoints]=
+const uint16 DMSTableCM[DMSTablePoints]=
 {80, 70, 60, 50, 40, 30, 25, 20, 15, 10, 5};
 
+// internal timing related variables that control when the sensors are read
+unsigned long last_sensor_read = 0;
+unsigned long last_battery_read = 0;
 
-// define Interrupt Service Routine for the sensor loop
-ISR(TIMER3_COMPA_vect)      
+
+// function that reads all the sensors from the main loop
+// SENSOR_READ_INTERVAL in global.h determines how often the sensors are read
+// BATTERY_READ_INTERVAL in global.h determines how often the battery voltage is read
+// Returns:  int flag = 0 when no new values have been read
+//           int flag = 1 when new values have been read
+int adc_readSensors()    
 {
-	// read each sensor in sequence
-	// single conversion time is around 120us
-	if (adc_sensor_enable[ADC_GYROX-1] == 1)
-	{
-		adc_sensor_val[ADC_GYROX-1] = adc_read(ADC_GYROX);
-	}
-	if (adc_sensor_enable[ADC_GYROY-1] == 1)
-	{
-		adc_sensor_val[ADC_GYROY-1] = adc_read(ADC_GYROY);
-	}
-	if (adc_sensor_enable[ADC_DMS-1] == 1)
-	{
-		adc_sensor_val[ADC_DMS-1] = adc_read(ADC_DMS);
-	}
-	// also read the battery voltage every 10th instance
-	adc_read_battery++;
-	if (adc_read_battery == 10)
+	// reading the battery has no impact on return value, so done first
+	if( (millis() - last_battery_read) >= BATTERY_READ_INTERVAL ) 	
 	{
 		adc_battery_val = adc_readBatteryMillivolts();
-		adc_read_battery = 0;
+		// reset the timing variable
+		last_battery_read = millis();
 	}
+
+	// first check if we are overdue for reading the sensors
+	if( (millis() - last_sensor_read) >= SENSOR_READ_INTERVAL ) 
+	{
+		// read each sensor in sequence
+		// single conversion time is around 120us
+		if (adc_sensor_enable[ADC_GYROX-1] == 1)
+		{
+			adc_sensor_val[ADC_GYROX-1] = adc_read(ADC_GYROX);
+		}
+		if (adc_sensor_enable[ADC_GYROY-1] == 1)
+		{
+			adc_sensor_val[ADC_GYROY-1] = adc_read(ADC_GYROY);
+		}
+		if (adc_sensor_enable[ADC_DMS-1] == 1)
+		{
+			adc_sensor_val[ADC_DMS-1] = adc_convertDMStoCM(adc_read(ADC_DMS));
+		}
+		// reset the timing variable
+		last_sensor_read = millis();
+		return 1;
+	}
+	
+	// didn't update the sensors
+	return 0;
 }
 
 // Initialization for the ADC and sensor readings
@@ -95,6 +116,9 @@ void adc_init()
 	// now check the battery voltage
 	adc_battery_val = adc_readBatteryMillivolts();
 	
+	// and set the timing variables
+	last_battery_read = millis();
+
 	// finally we need to find initial gyro values
 	adc_gyrox_center = 0;
 	adc_gyroy_center = 0;
@@ -114,26 +138,9 @@ void adc_init()
 	}
 	adc_gyrox_center = adc_gyrox_center / 20;
 	adc_gyroy_center = adc_gyroy_center / 20;
-}
-
-// function that enables the interrupt based sensor loop
-// the interval parameter determines how often the sensors are read
-// because we are using uint8 maximum is 255ms
-void adc_enableSensorLoop(uint8 interval_ms)
-{
-	// set up the timer, we need to use TIMER3 since 1 is already in use
-	// Start timer 3 with clock prescaler CLK/64
-    // Resolution is 4us and 2500 corresponds to 10ms (max is 262ms)
-	// Disable all compare output functions and pins  
-    TCCR3A =  (0<<COM3A1)|(0<<COM3A0)|(0<<COM3B1)|(0<<COM3B0)
-             |(0<<COM3C1)|(0<<COM3C0)|(0<<WGM31) |(0<<WGM30);
-
-	// Prescaler @ 1/64 using CS32=0, CS31=1 and CS30=0 and Normal CTC mode
-    TCCR3B =  (0<<ICNC3) |(0<<ICES3) |(0<<WGM33) |(1<<WGM32)
-             |(0<<CS32)  |(1<<CS31)  |(1<<CS30);
-
-	bit_set_hi( TIMSK3, OCIE3A );	// Enable CTC interrupt 
-    OCR3A = 250 * interval_ms; 		// Set CTC compare value to interval in ms 
+	
+	// and set the timing variables
+	last_sensor_read = millis();
 }
 
 // set the ADC to run in either 8-bit mode (MODE_8_BIT) or 
@@ -284,12 +291,12 @@ uint16 adc_readAverage(uint8 channel, uint16 samples)
 	while (adc_isConverting());		// wait while converting (discard first reading)
 	do
 	{
-		ADCSRA |= 1 << ADSC;	// start the next conversion on current channel
+		ADCSRA |= 1 << ADSC;		// start the next conversion on current channel
 		while (adc_isConverting());	// wait while converting
 		sum += adc_getConversionResult();	// sum the results
 	} while (--i);
 	
-	if (samples < 64)			// can do the division much faster
+	if (samples < 64)				// can do the division much faster
 		return ((uint16)sum + (samples >> 1)) / (uint8)samples;
 	return (sum + (samples >> 1)) / samples;	// compute the rounded avg
 }

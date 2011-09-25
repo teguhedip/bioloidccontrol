@@ -40,11 +40,14 @@ const char COMMANDSTR16[] PROGMEM = "WBRT";
 const char COMMANDSTR17[] PROGMEM = "SIT ";
 const char COMMANDSTR18[] PROGMEM = "BAL ";
 const char COMMANDSTR19[] PROGMEM = "M   ";
+const char COMMANDSTR20[] PROGMEM = "FGUP";
+const char COMMANDSTR21[] PROGMEM = "BGUP";
 PGM_P COMMANDSTR_POINTER[] PROGMEM = { 
 COMMANDSTR0, COMMANDSTR1, COMMANDSTR2, COMMANDSTR3, COMMANDSTR4,
 COMMANDSTR5, COMMANDSTR6, COMMANDSTR7, COMMANDSTR8, COMMANDSTR9,
 COMMANDSTR10, COMMANDSTR11, COMMANDSTR12, COMMANDSTR13, COMMANDSTR14, 
-COMMANDSTR15, COMMANDSTR16, COMMANDSTR17, COMMANDSTR18, COMMANDSTR19 };
+COMMANDSTR15, COMMANDSTR16, COMMANDSTR17, COMMANDSTR18, COMMANDSTR19,
+COMMANDSTR20, COMMANDSTR21 };
 
 // set up the read buffer
 volatile unsigned char gbSerialBuffer[MAXNUM_SERIALBUFF] = {0};
@@ -146,7 +149,9 @@ void serial_init(long baudrate)
 // manages all requests to read from or write to the serial port
 // Receives commands from the serial port and writes output (excluding printf)
 // Checks the status flag provided by the ISR for operation
-void SerialReceiveCommand()
+// Returns:  int flag = 0 when no new command has been received
+//           int flag = 1 when new command has been received
+int SerialReceiveCommand()
 {
 	char c1, c2, c3, c4, command[6], buffer[6];
 	int match;
@@ -154,7 +159,7 @@ void SerialReceiveCommand()
 	if (flag_receive_ready == 0)
 	{
 		// nothing to do, go straight back to main loop
-		return;
+		return 0;
 	}
 	
 	// we have a new command, get characters 
@@ -234,6 +239,13 @@ void SerialReceiveCommand()
 	} else {
 		printf( "%c%c%c%c \nUnknown Command! \n> ", c1, c2, c3, c4 );
 	}	
+	
+	// set command received flag only if valid command
+	if ( bioloid_command == COMMAND_NOT_FOUND ) {
+		return 0;
+	} else {
+		return 1;
+	}
 }
 
 

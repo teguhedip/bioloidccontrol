@@ -36,13 +36,18 @@ void unpackMotion(int StartPage);
 // Returns StartPage of next motion in sequence (0 - no further motions)
 int executeMotion(int StartPage);
 
-// This function executes a robot motion consisting of one or more motion 
+// This function executes robot motions consisting of one or more motion 
 // pages defined in motion.h
-// StartPage - number of the first motion page in the motion
-void executeMotionSequence(int StartPage);
+// It implements a finite state machine to know what it is doing and what to do next
+// Code is meant to be reentrant so it can easily be converted to a task with a RTOS
+void executeMotionSequence();
 
 // This function executes the exit page motion for the  
 // current motion page
  void executeMotionExitPage();
+
+// Function to check for any remaining servo movement
+// Returns:  (int)	number of servos still moving
+int checkMotionStepFinished();
 
 #endif /* MOTION_F_H_ */

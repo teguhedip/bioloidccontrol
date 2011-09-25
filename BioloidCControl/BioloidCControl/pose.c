@@ -126,9 +126,13 @@ void calculatePoseServoSpeeds(uint16 time)
 
 
 // Moves from the current pose to the goal pose
-// using interpolation of steps and delay between steps
+// using calculated servo speeds and delay between steps
 // to achieve the required step timing
-void moveToGoalPose(uint16 time, uint16 goal[])
+// Inputs:  (uint16)  allocated step time in ms
+//          (uint16)  array of goal positions for the actuators
+//          (uint8)   flag = 0 don't wait for motion to finish
+//					  flag = 1 wait for motion to finish and check alarms
+void moveToGoalPose(uint16 time, uint16 goal[], uint8 wait_flag)
 {
     int i;
 	int commStatus, errorStatus;
@@ -150,28 +154,30 @@ void moveToGoalPose(uint16 time, uint16 goal[])
 		return;
 	}
 	
-	// wait for the movement to finish
-	waitForPoseFinish();
+	if( wait_flag == 1 )
+	{
+		// wait for the movement to finish
+		waitForPoseFinish();
 	
-	// check that we didn't cause any alarms
-	for (i=0; i<NUM_AX12_SERVOS; i++) {
-		// ping the servo and unpack error code (if any)
-		errorStatus = dxl_ping(AX12_IDS[i]);
-		if(errorStatus != 0) {
-			// there has been an error, disable torque
-			commStatus = dxl_write_word(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
-			printf("\nmoveToGoalPose Alarm ID%i - Error Code %i\n", AX12_IDS[i], errorStatus);
-			return;
-		}
+		// check that we didn't cause any alarms
+		for (i=0; i<NUM_AX12_SERVOS; i++) {
+			// ping the servo and unpack error code (if any)
+			errorStatus = dxl_ping(AX12_IDS[i]);
+			if(errorStatus != 0) {
+				// there has been an error, disable torque
+				commStatus = dxl_write_word(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
+				printf("\nmoveToGoalPose Alarm ID%i - Error Code %i\n", AX12_IDS[i], errorStatus);
+				return;
+			}
+		}	
+		// all ok, read back current pose
+		readCurrentPose();	
 	}	
-	
-	// all ok, read back current pose
-	readCurrentPose();	
 }
 
 // move robot to default pose
 void moveToDefaultPose()
 {
 	// assume default pose defined 
-	moveToGoalPose(InitialPlayTime, InitialValues);
+	moveToGoalPose(InitialPlayTime, InitialValues, 1);
 }

@@ -32,11 +32,11 @@
  */
 
 #include <stdio.h>
+#include <util/delay.h>
 #include "global.h"
 #include "dxl_hal.h"
 #include "dynamixel.h"
 #include "pose.h"
-#include <util/delay.h>
 
 // define the positions of the bytes in the packet
 #define ID					(2)

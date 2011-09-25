@@ -55,9 +55,6 @@
   const uint8 AX12_IDS[NUM_AX12_SERVOS] = {1,2,3,4,5,6,9,10,11,12,13,14,15,16,17,18};
 #endif
 
-// set some execution parameters
-const uint8 SENSOR_LOOP_MS = 200;		// read sensors every 200ms (max is 255ms)
-
 // store the buzzer melodies in Flash
 const char melody1[] PROGMEM = "!L16 cdefgab>cbagfedc";
 const char melody2[] PROGMEM = "T240 L8 a gafaeada c+adaeafa";
@@ -108,17 +105,16 @@ static inline void delay_ms(uint16 count) {
 
 int main(void)
 {
+	// local variables
+	int	sensor_flag, command_flag, comm_status, slip_flag;
+	
 	// Initialization Routines
 	led_init();				// switches all 6 LEDs on
+	serial_init(57600);		// serial port at 57600 baud
+	buzzer_init();			// enable buzzer melodies
+	button_init();			// enable push buttons on CM-510
 	delay_ms(200);			// wait 0.2s 
 	led_off(ALL_LED);		// and switch them back off
-
-	serial_init(57600);		// serial port at 57600 baud
-	sei();
-	printf("\nSerial Init complete.\n");
-
-	// buzzer_init();		// enable buzzer melodies
-	button_init();			// enable push buttons on CM-510
 	
 	// initialize the ADC and take default readings
 	adc_init();
@@ -138,7 +134,6 @@ int main(void)
 	// initialize motion pages
 	motionPageInit();
 	
-	
 	// Wait for the START Button before going any further
 	while(!start_button_pressed)
 	{
@@ -148,29 +143,49 @@ int main(void)
 	}
 	// Now turn LED solid
 	led_on(LED_PLAY);
+	// and reset the start button variable
+	start_button_pressed = FALSE;
 
-	// start the ADC sensor loop
-	adc_enableSensorLoop(SENSOR_LOOP_MS);
-	
 	// perform high level initialization of Dynamixel bus and servos
 	dxl_init(DEFAULT_BAUDNUMBER);
 
 	// assume initial pose
 	moveToDefaultPose();
 
-	// test
-	unpackMotion(8);
-	unpackMotion(22);
-	unpackMotion(23);
-
 	// write out the command prompt
 	printf(	"\nReady for command.\n> ");
 
-	// main loop
+	// main command loop
     while(1)
     {
 		// Check if we received a new command
-		SerialReceiveCommand();
+		command_flag = SerialReceiveCommand();
+		
+		// check if start button has been pressed and we need to do emergency stop
+		if ( start_button_pressed && bioloid_command != COMMAND_STOP )
+		{
+			// disable torque & reset current command
+			comm_status = dxl_write_word(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
+			last_bioloid_command = bioloid_command;
+			bioloid_command = COMMAND_STOP;
+			command_flag = 1;
+			// and reset the start button variable
+			start_button_pressed = FALSE;
+		} else if ( start_button_pressed && bioloid_command == COMMAND_STOP ) {
+			// we are resuming from an emergency stop, restore last command
+			bioloid_command = last_bioloid_command;
+			last_bioloid_command = COMMAND_STOP;
+			command_flag = 1;
+		}
+		
+		// Check if we need to read the sensors 
+		sensor_flag = adc_readSensors();
+		if ( sensor_flag == 1 ) {
+			// did read sensors - check if robot slipped
+			if( adc_sensor_val[ADC_GYROX-1] - adc_gyrox_center > GYROX_SLIP_ERROR ) slip_flag = -1;  // forward slip
+			if( adc_sensor_val[ADC_GYROX-1] - adc_gyrox_center < -GYROX_SLIP_ERROR ) slip_flag = 1;	 // backward slip
+		}
+		
 		
 		// Check for button presses
 		if( button_up_pressed ) {
@@ -187,49 +202,8 @@ int main(void)
 			// reset the variable
 			button_up_pressed = FALSE;
 
-		} else if( button_down_pressed ) {
-			// switch on bottom 2 LEDs
-			led_off(ALL_LED);
-			led_on(LED_AUX | LED_PLAY);
-			
-			// play melody 2
-			//buzzer_playFromProgramSpace(melody2);
-			
-			// execute a motion - Bravo
-			//executeMotionSequence(2);
-
-			// reset the variable
-			button_down_pressed = FALSE;
-			
-		} else if( button_left_pressed ) {
-			// switch on left 3 LEDs
-			led_off(ALL_LED);
-			led_on(LED_MANAGE | LED_PROGRAM | LED_PLAY);
-			
-			// play melody 3
-			//buzzer_playFromProgramSpace(melody3);
-			
-			// execute a motion - Rap chest
-			//executeMotionSequence(5);
-
-			// reset the variable
-			button_left_pressed = FALSE;
-			
-		} else if( button_right_pressed ) {
-			// switch on right 3 LEDs
-			led_off(ALL_LED);
-			led_on(LED_TXD | LED_RXD | LED_AUX);
-			
-			// play melody 4
-			//buzzer_playFromProgramSpace(melody4);
-			
-			// execute a motion - Sit Down
-			//executeMotionSequence(25);
-
-			// reset the variable
-			button_right_pressed = FALSE;
 		}
 		
-    } // end of main while loop
+    } // end of main command loop
 
 }
