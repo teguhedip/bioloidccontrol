@@ -41,6 +41,7 @@
 uint8 motion_state = 0;					// motion state as per above definitions
 unsigned long pause_start_time = 0;		// millis() at start of pause time
 uint8 current_step = 0;					// number of the current motion page step
+uint8 repeat_counter = 0;				// number of repeats of page already performed
 
 // Global variables related to the finite state machine that governs execution
 extern volatile uint8 bioloid_command;			// current command
@@ -352,7 +353,7 @@ void executeMotionSequence()
 		}
 	} else if( motion_state == STEP_IN_PAUSE ) {
 		// check if we still need to wait for pause time to expire
-		if ( (millis()-pause_start_time) >= CurrentMotion.PauseTime[current_step] )
+		if ( (millis()-pause_start_time) >= CurrentMotion.PauseTime[current_step-1] )
 		{
 			// pause is finished, update state
 			motion_state = PAUSE_FINISHED;
@@ -378,6 +379,83 @@ void executeMotionSequence()
 		readCurrentPose();	
 	}
 	
+	// Now we can figure out what to do next
+	// Options are:	1. Switch to ExitPage
+	//				2. Start Pause Time after step
+	//				3. Execute next step in current motion page
+	//				4. Go back to first step in current motion page (repeat)
+	//				5. Switch to NextPage
+	if ( motion_state == STEP_FINISHED || motion_state == PAUSE_FINISHED )
+	{
+		// Option 1 - switch to exit page
+		if ( current_step == CurrentMotion.Steps && bioloid_command == COMMAND_STOP )
+		{
+			// have reached last step in this page and now move to ExitPage
+			current_motion_page = CurrentMotion.ExitPage;
+			unpackMotion(current_motion_page);
+			current_step = 1;
+			repeat_counter = 1;
+			motion_state = STEP_IN_MOTION;
+			executeMotionStep(current_step);
+		}
+		
+		/***********************************************************************************************************************/
+		// needs code here to switch motion page if command has changed - see WALK EXECUTE for transitions between walk commands
+		/***********************************************************************************************************************/
+	}	
+	
+	if ( motion_state == STEP_FINISHED )
+	{
+		// Option 2 - start pause after step
+		if ( CurrentMotion.PauseTime[current_step-1] > 0 && bioloid_command != COMMAND_STOP )
+		{
+			// set the timer for the pause
+			pause_start_time = millis();
+			motion_state = STEP_IN_PAUSE;
+		} else {
+			// no pause required, go straight to executing next step
+			motion_state = PAUSE_FINISHED;
+		}
+	}	
+	
+	
+	if ( motion_state == PAUSE_FINISHED )
+	{
+		// Option 3 - execute next step in this motion page
+		if ( current_step != CurrentMotion.Steps )
+		{
+			// Update step and motion status
+			current_step++;
+			motion_state = STEP_IN_MOTION;
+			executeMotionStep(current_step);
+		}
+		// Option 4 - repeat the current motion page
+		else if ( current_step == CurrentMotion.Steps && CurrentMotion.RepeatTime > repeat_counter )
+		{
+			// Update step, repeat and motion status
+			current_step = 1;
+			repeat_counter++;
+			motion_state = STEP_IN_MOTION;
+			executeMotionStep(current_step);
+		} 
+		// Option 5 - switch to NextPage motion page
+		else if ( current_step == CurrentMotion.Steps && CurrentMotion.NextPage > 0 && CurrentMotion.NextPage <= NUM_MOTION_PAGES )
+		{
+			// Update step, repeat and motion status
+			current_motion_page = CurrentMotion.NextPage;
+			unpackMotion(current_motion_page);
+			current_step = 1;
+			repeat_counter = 1;
+			motion_state = STEP_IN_MOTION;
+			executeMotionStep(current_step);
+		} 
+		// if we end up here we need a new command
+		else {
+			// nothing to do, wait for command
+			motion_state = MOTION_STOPPED;
+			current_motion_page = 0;
+		}
+	}
 
 }
 
@@ -443,6 +521,25 @@ void unpackMotion(int StartPage)
 			CurrentMotion.PlayTime[s] = 10 * (CurrentMotion.PlayTime[s]/CurrentMotion.SpeedRate10);
 		}		
 	}		
+}
+
+// This function initiates the execution of a motion step in the given motion page
+// Step - number of the step to be initiated
+// Returns (long) start time of the step
+unsigned long executeMotionStep(int Step)
+{
+	uint16 goalPose[NUM_AX12_SERVOS];
+	unsigned long step_start_time;
+
+	// create the servo values array 
+	for (int j=0; j<NUM_AX12_SERVOS; j++)
+		{ goalPose[j] = CurrentMotion.StepValues[Step-1][j]; }
+	// take the time
+	step_start_time = millis();
+	// execute the pose without waiting for completion
+	moveToGoalPose(CurrentMotion.PlayTime[Step-1], goalPose, 0);
+	
+	return step_start_time;
 }
 
 // This function executes a single robot motion page defined in motion.h

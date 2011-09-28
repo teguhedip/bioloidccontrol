@@ -60,6 +60,7 @@ const char melody1[] PROGMEM = "!L16 cdefgab>cbagfedc";
 const char melody2[] PROGMEM = "T240 L8 a gafaeada c+adaeafa";
 const char melody3[] PROGMEM = "O6 T40 L16 d#<b<f#<d#<f#<bd#f#";
 const char melody4[] PROGMEM = "! O6 L16 dcd<b-d<ad<g d<f+d<gd<ad<b-";
+const char melody5[] PROGMEM = "! O3 T40 f.b.f.b.f.b.f.b.";
  
 // Define global variables for use in the ISRs
 // Button related variables
@@ -176,6 +177,8 @@ int main(void)
 			bioloid_command = last_bioloid_command;
 			last_bioloid_command = COMMAND_STOP;
 			command_flag = 1;
+			// and reset the start button variable
+			start_button_pressed = FALSE;
 		}
 		
 		// Check if we need to read the sensors 
@@ -184,6 +187,14 @@ int main(void)
 			// did read sensors - check if robot slipped
 			if( adc_sensor_val[ADC_GYROX-1] - adc_gyrox_center > GYROX_SLIP_ERROR ) slip_flag = -1;  // forward slip
 			if( adc_sensor_val[ADC_GYROX-1] - adc_gyrox_center < -GYROX_SLIP_ERROR ) slip_flag = 1;	 // backward slip
+			// check battery voltage still within limits
+			if ( adc_battery_val < LOW_VOLTAGE_CUTOFF ) {
+				// too low - play alarm and stop 
+				buzzer_playFromProgramSpace(melody5);
+				bioloid_command = last_bioloid_command;
+				last_bioloid_command = COMMAND_SIT;
+				command_flag = 1;
+			}
 		}
 		
 		
@@ -193,15 +204,8 @@ int main(void)
 			led_off(ALL_LED);
 			led_on(LED_MANAGE | LED_TXD);
 			
-			// play melody 1
-			//buzzer_playFromProgramSpace(melody1);
-			
-			// execute a motion - Bow
-			//executeMotionSequence(1);
-			
 			// reset the variable
 			button_up_pressed = FALSE;
-
 		}
 		
     } // end of main command loop
