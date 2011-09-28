@@ -63,6 +63,34 @@ extern "C" {
 #define SENSOR_READ_INTERVAL	100		// read gyro/DMS every 100ms 
 #define BATTERY_READ_INTERVAL	1000	// read battery once every second
 #define GYROX_SLIP_ERROR		200		// deviation from center interpreted as a slip
+#define LOW_VOLTAGE_CUTOFF		10500	// 10.5V is a very safe limit for a 11.7V LiPo
+
+// Command List
+#define NUMBER_OF_COMMANDS				22	// how many commands we recognize
+#define COMMAND_STOP					0
+#define COMMAND_WALK_FORWARD			1
+#define COMMAND_WALK_BACKWARD			2
+#define COMMAND_WALK_TURN_LEFT			3
+#define COMMAND_WALK_TURN_RIGHT			4
+#define COMMAND_WALK_LEFT_SIDE			5
+#define COMMAND_WALK_RIGHT_SIDE			6
+#define COMMAND_WALK_FWD_LEFT_SIDE		7
+#define COMMAND_WALK_FWD_RIGHT_SIDE		8
+#define COMMAND_WALK_BWD_LEFT_SIDE		9
+#define COMMAND_WALK_BWD_RIGHT_SIDE		10
+#define COMMAND_WALK_AVOID_LEFT			11
+#define COMMAND_WALK_AVOID_RIGHT		12
+#define COMMAND_WALK_FWD_TURN_LEFT		13
+#define COMMAND_WALK_FWD_TURN_RIGHT		14
+#define COMMAND_WALK_BWD_TURN_LEFT		15
+#define COMMAND_WALK_BWD_TURN_RIGHT		16
+#define COMMAND_SIT						17
+#define COMMAND_BALANCE					18
+#define COMMAND_MOTIONPAGE				19
+#define COMAND_FRONT_GET_UP				20
+#define COMAND_BACK_GET_UP				21
+#define COMMAND_NOT_FOUND				255
+
 
 // Standard types
 typedef uint8_t		uint8;

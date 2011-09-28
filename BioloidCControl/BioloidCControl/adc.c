@@ -77,7 +77,7 @@ int adc_readSensors()
 		last_battery_read = millis();
 	}
 
-	// first check if we are overdue for reading the sensors
+	// check if we are overdue for reading the sensors
 	if( (millis() - last_sensor_read) >= SENSOR_READ_INTERVAL ) 
 	{
 		// read each sensor in sequence

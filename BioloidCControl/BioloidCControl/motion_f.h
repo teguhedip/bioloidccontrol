@@ -31,6 +31,11 @@ void motionPageInit();
 // StartPage - number of the motion page to be unpacked
 void unpackMotion(int StartPage);
 
+// This function initiates the execution of a motion step in the given motion page
+// Page - number of the motion page 
+// Returns (long) start time of the step
+unsigned long executeMotionStep(int Step);
+
 // This function executes a single robot motion page defined in motion.h
 // StartPage - number of the first motion page in the motion
 // Returns StartPage of next motion in sequence (0 - no further motions)
