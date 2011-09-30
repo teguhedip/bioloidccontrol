@@ -132,7 +132,10 @@ void calculatePoseServoSpeeds(uint16 time)
 //          (uint16)  array of goal positions for the actuators
 //          (uint8)   flag = 0 don't wait for motion to finish
 //					  flag = 1 wait for motion to finish and check alarms
-void moveToGoalPose(uint16 time, uint16 goal[], uint8 wait_flag)
+// Returns	(int)	  -1  - communication error
+//					   0  - all ok
+//					   1  - alarm
+int moveToGoalPose(uint16 time, uint16 goal[], uint8 wait_flag)
 {
     int i;
 	int commStatus, errorStatus;
@@ -151,7 +154,7 @@ void moveToGoalPose(uint16 time, uint16 goal[], uint8 wait_flag)
 		// there has been an error, print and break
 		printf("\nmoveToGoalPose - ");
 		dxl_printCommStatus(commStatus);
-		return;
+		return -1;
 	}
 	
 	if( wait_flag == 1 )
@@ -165,14 +168,15 @@ void moveToGoalPose(uint16 time, uint16 goal[], uint8 wait_flag)
 			errorStatus = dxl_ping(AX12_IDS[i]);
 			if(errorStatus != 0) {
 				// there has been an error, disable torque
-				commStatus = dxl_write_word(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
+				commStatus = dxl_write_byte(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
 				printf("\nmoveToGoalPose Alarm ID%i - Error Code %i\n", AX12_IDS[i], errorStatus);
-				return;
+				return 1;
 			}
 		}	
 		// all ok, read back current pose
 		readCurrentPose();	
 	}	
+	return 0;
 }
 
 // move robot to default pose

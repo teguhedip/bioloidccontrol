@@ -66,7 +66,12 @@ extern "C" {
 #define LOW_VOLTAGE_CUTOFF		10500	// 10.5V is a very safe limit for a 11.7V LiPo
 
 // Command List
-#define NUMBER_OF_COMMANDS				22	// how many commands we recognize
+// To add commands:		1. Add it to the list below
+//						2. Update the number of commands below
+//						3. If required, add a motion page associated with the command below
+//						4. Edit serial.c and update the command string list
+//						5. Edit serial.c and update SerialReceiveCommand()
+#define NUMBER_OF_COMMANDS				25	// how many commands we recognize
 #define COMMAND_STOP					0
 #define COMMAND_WALK_FORWARD			1
 #define COMMAND_WALK_BACKWARD			2
@@ -84,12 +89,25 @@ extern "C" {
 #define COMMAND_WALK_FWD_TURN_RIGHT		14
 #define COMMAND_WALK_BWD_TURN_LEFT		15
 #define COMMAND_WALK_BWD_TURN_RIGHT		16
-#define COMMAND_SIT						17
-#define COMMAND_BALANCE					18
-#define COMMAND_MOTIONPAGE				19
-#define COMAND_FRONT_GET_UP				20
-#define COMAND_BACK_GET_UP				21
+#define COMMAND_WALK_READY				17
+#define COMMAND_SIT						18
+#define COMMAND_STAND					19
+#define COMMAND_BALANCE					20
+#define COMMAND_MOTIONPAGE				21
+#define COMMAND_FRONT_GET_UP			22
+#define COMMAND_BACK_GET_UP				23
+#define COMMAND_RESET					24
 #define COMMAND_NOT_FOUND				255
+
+// Motion Pages associated with non-walking commands
+// these are the same for all 3 HUMANOID Robot Types
+#define COMMAND_WALK_READY_MP			31
+#define COMMAND_SIT_MP					25
+#define COMMAND_STAND_MP				26
+#define COMMAND_BALANCE_MP				224
+#define COMMAND_FRONT_GET_UP_MP			27
+#define COMMAND_BACK_GET_UP_MP			28
+#define COMMAND_RESET_MP				26
 
 
 // Standard types

@@ -36,6 +36,11 @@ void unpackMotion(int StartPage);
 // Returns (long) start time of the step
 unsigned long executeMotionStep(int Step);
 
+// This function initializes the joint flexibility values for the motion page
+// Returns (int)  0  - all ok
+//				 -1  - communication error
+int setMotionPageJointFlexibility();
+
 // This function executes a single robot motion page defined in motion.h
 // StartPage - number of the first motion page in the motion
 // Returns StartPage of next motion in sequence (0 - no further motions)

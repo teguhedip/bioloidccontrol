@@ -17,8 +17,6 @@
 extern "C" {
 #endif
 
-#include <avr/pgmspace.h>
-
 // Define which mode of transport is used
 // Use SERIAL_CABLE for Rs-232 cable from USB2Dynamixel to CM-510
 // Use ZIG_2_SERIAL for Zig-110 to Zig2Serial attached to USB2Dynamixel
@@ -60,7 +58,7 @@ extern "C" {
 // Checks the status flag provided by the ISR for operation
 // Returns:  int flag = 0 when no new command has been received
 //           int flag = 1 when new command has been received
-int SerialReceiveCommand();
+int serialReceiveCommand();
 
 // Serial Port initialization with the specified baud rate
 void serial_init(long baudrate);
