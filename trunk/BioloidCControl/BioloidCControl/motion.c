@@ -46,12 +46,15 @@ uint8 repeat_counter = 0;				// number of repeats of page already performed
 // Global variables related to the finite state machine that governs execution
 extern volatile uint8 bioloid_command;			// current command
 extern volatile uint8 last_bioloid_command;		// last command
+extern volatile bool  new_command;				// flag that we got a new command
 
 // global hardware definition variables
 extern const uint8 AX12_IDS[NUM_AX12_SERVOS];
 extern const uint8 AX12Servos[MAX_AX12_SERVOS];
-// global variable that keeps the current motion page
-extern uint8 current_motion_page;
+// global variables that keep the current and next motion page
+extern volatile uint8 current_motion_page;
+extern volatile uint8 next_motion_page;			// next motion page if we got new command
+
 // should keep the current pose in a global array
 extern int16 current_pose[NUM_AX12_SERVOS];
 
@@ -370,8 +373,9 @@ void executeMotionSequence()
 			error_status = dxl_ping(AX12_IDS[i]);
 			if(error_status != 0) {
 				// there has been an error, disable torque
-				comm_status = dxl_write_word(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
+				comm_status = dxl_write_byte(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
 				printf("\nexecuteMotionSequence Alarm ID%i - Error Code %i\n", AX12_IDS[i], error_status);
+				motion_state = MOTION_ALARM;
 				return;
 			}
 		}	
@@ -379,12 +383,24 @@ void executeMotionSequence()
 		readCurrentPose();	
 	}
 	
+	// We also need to check if we received a RESET command after alarm shutdown
+	if ( motion_state == MOTION_ALARM && bioloid_command == COMMAND_RESET )
+	{
+		// Reset the Dynamixel actuators - reset torque limit and re-enable torque
+		comm_status = dxl_write_word(BROADCAST_ID, DXL_TORQUE_LIMIT_L, 0x3FF);
+		comm_status = dxl_write_byte(BROADCAST_ID, DXL_TORQUE_ENABLE, 1);
+		motion_state = MOTION_STOPPED;
+	}
+	
 	// Now we can figure out what to do next
 	// Options are:	1. Switch to ExitPage
-	//				2. Start Pause Time after step
-	//				3. Execute next step in current motion page
-	//				4. Go back to first step in current motion page (repeat)
-	//				5. Switch to NextPage
+	//				2. Respond to a change in walk command (see WALK EXECUTE task in RoboPlus Task sample files)
+	//				3. Start Pause Time after step
+	//				4. Execute next step in current motion page
+	//				5. Go back to first step in current motion page (repeat)
+	//				6. Switch to NextPage
+	//				7. Respond to a new non-walk command 
+	//				8. Nothing to do - wait for new command
 	if ( motion_state == STEP_FINISHED || motion_state == PAUSE_FINISHED )
 	{
 		// Option 1 - switch to exit page
@@ -393,20 +409,28 @@ void executeMotionSequence()
 			// have reached last step in this page and now move to ExitPage
 			current_motion_page = CurrentMotion.ExitPage;
 			unpackMotion(current_motion_page);
-			current_step = 1;
-			repeat_counter = 1;
-			motion_state = STEP_IN_MOTION;
-			executeMotionStep(current_step);
+			if ( setMotionPageJointFlexibility() == 0 ) {
+				// joint flex values set ok, execute motion
+				current_step = 1;
+				repeat_counter = 1;
+				motion_state = STEP_IN_MOTION;
+				executeMotionStep(current_step);
+			} else {
+				// this shouldn't really happen, but we need to cater to the eventuality
+				comm_status = dxl_write_byte(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
+				motion_state = MOTION_ALARM;
+				return;
+			}
 		}
 		
 		/***********************************************************************************************************************/
-		// needs code here to switch motion page if command has changed - see WALK EXECUTE for transitions between walk commands
+		// needs code here to switch motion page if walk command has changed - see WALK EXECUTE for transitions between walk commands
 		/***********************************************************************************************************************/
 	}	
 	
 	if ( motion_state == STEP_FINISHED )
 	{
-		// Option 2 - start pause after step
+		// Option 3 - start pause after step
 		if ( CurrentMotion.PauseTime[current_step-1] > 0 && bioloid_command != COMMAND_STOP )
 		{
 			// set the timer for the pause
@@ -421,7 +445,7 @@ void executeMotionSequence()
 	
 	if ( motion_state == PAUSE_FINISHED )
 	{
-		// Option 3 - execute next step in this motion page
+		// Option 4 - execute next step in this motion page
 		if ( current_step != CurrentMotion.Steps )
 		{
 			// Update step and motion status
@@ -429,7 +453,7 @@ void executeMotionSequence()
 			motion_state = STEP_IN_MOTION;
 			executeMotionStep(current_step);
 		}
-		// Option 4 - repeat the current motion page
+		// Option 5 - repeat the current motion page
 		else if ( current_step == CurrentMotion.Steps && CurrentMotion.RepeatTime > repeat_counter )
 		{
 			// Update step, repeat and motion status
@@ -438,23 +462,46 @@ void executeMotionSequence()
 			motion_state = STEP_IN_MOTION;
 			executeMotionStep(current_step);
 		} 
-		// Option 5 - switch to NextPage motion page
+		// Option 6 - switch to NextPage motion page
 		else if ( current_step == CurrentMotion.Steps && CurrentMotion.NextPage > 0 && CurrentMotion.NextPage <= NUM_MOTION_PAGES )
 		{
 			// Update step, repeat and motion status
 			current_motion_page = CurrentMotion.NextPage;
 			unpackMotion(current_motion_page);
-			current_step = 1;
-			repeat_counter = 1;
-			motion_state = STEP_IN_MOTION;
-			executeMotionStep(current_step);
+			if ( setMotionPageJointFlexibility() == 0 ) {
+				// joint flex values set ok, execute motion
+				current_step = 1;
+				repeat_counter = 1;
+				motion_state = STEP_IN_MOTION;
+				executeMotionStep(current_step);
+			}
 		} 
-		// if we end up here we need a new command
+		// if we end up here we will need a new command
 		else {
 			// nothing to do, wait for command
 			motion_state = MOTION_STOPPED;
 			current_motion_page = 0;
 		}
+	}
+	
+	// Option 7 - Respond to non-walk command - set associated motion page
+	if ( motion_state == MOTION_STOPPED && new_command == TRUE )
+	{
+		// unpack the new motion page and start the motion
+		unpackMotion(next_motion_page);
+		current_motion_page = next_motion_page;
+		if ( setMotionPageJointFlexibility() == 0 ) {
+			// joint flex values set ok, execute motion
+			current_step = 1;
+			repeat_counter = 1;
+			motion_state = STEP_IN_MOTION;
+			executeMotionStep(current_step);
+			new_command = FALSE;
+		}		
+	} 
+	// Option 8 - Nothing to do - keep waiting for new command
+	else {
+		return;
 	}
 
 }
@@ -531,20 +578,59 @@ unsigned long executeMotionStep(int Step)
 	uint16 goalPose[NUM_AX12_SERVOS];
 	unsigned long step_start_time;
 
-	// create the servo values array 
-	for (int j=0; j<NUM_AX12_SERVOS; j++)
-		{ goalPose[j] = CurrentMotion.StepValues[Step-1][j]; }
-	// take the time
-	step_start_time = millis();
-	// execute the pose without waiting for completion
-	moveToGoalPose(CurrentMotion.PlayTime[Step-1], goalPose, 0);
-	
-	return step_start_time;
+	// Make sure we never access random memory by accident and damage the robot
+	if ( Step > 0 && Step <= CurrentMotion.Steps )
+	{
+		// create the servo values array 
+		for (int j=0; j<NUM_AX12_SERVOS; j++)
+			{ goalPose[j] = CurrentMotion.StepValues[Step-1][j]; }
+		// take the time
+		step_start_time = millis();
+		// execute the pose without waiting for completion
+		moveToGoalPose(CurrentMotion.PlayTime[Step-1], goalPose, 0);
+		// return the start time to keep track of step timing
+		return step_start_time;
+	} else {
+		// do nothing and return 0
+		return 0;
+	}
+}
+
+// This function initializes the joint flexibility values for the motion page
+// Returns (int)  0  - all ok
+//				 -1  - communication error
+int setMotionPageJointFlexibility()
+{
+	uint8 complianceSlope;
+	int commStatus;
+
+	// now we can process the joint flexibility values
+	for (uint8 i=0; i<NUM_AX12_SERVOS; i++) {
+		// translation is bit shift operation (see AX-12 manual)
+		complianceSlope = 1<<CurrentMotion.JointFlex[i]; 
+		commStatus = dxl_write_byte(AX12_IDS[i], DXL_CCW_COMPLIANCE_SLOPE, complianceSlope);
+		if(commStatus != COMM_RXSUCCESS) {
+			// there has been an error, print and break
+			printf("moveToGoalPose Joint Flex %i - ", i);
+			dxl_printCommStatus(commStatus);
+			return -1;
+		}
+		commStatus = dxl_write_byte(AX12_IDS[i], DXL_CW_COMPLIANCE_SLOPE, complianceSlope);
+		if(commStatus != COMM_RXSUCCESS) {
+			// there has been an error, print and break
+			printf("moveToGoalPose Joint Flex %i - ", i);
+			dxl_printCommStatus(commStatus);
+			return -1;
+		}
+	}
+	return 0;
 }
 
 // This function executes a single robot motion page defined in motion.h
+// It waits for the motion to finish to return control, so it's no good 
+// for a command loop
 // StartPage - number of the first motion page in the motion
-// Returns StartPage of next motion in sequence (0 - no further motions)
+// Returns (int) StartPage of next motion in sequence (0 - no further motions)
 int executeMotion(int StartPage)
 {
 	uint8 complianceSlope;

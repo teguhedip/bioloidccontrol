@@ -88,13 +88,14 @@ volatile uint16 adc_gyroy_center = 0;	// gyro y center values
 // Global variables related to the finite state machine that governs execution
 volatile uint8 bioloid_command = 0;			// current command
 volatile uint8 last_bioloid_command = 0;	// last command
+volatile bool  new_command = FALSE;			// flag that we got a new command
 volatile uint8 flag_receive_ready = 0;		// received complete command flag
 
 // keep the current pose as global variable
 volatile int16 current_pose[NUM_AX12_SERVOS];
-// and also the current and last motion pages
+// and also the current and next motion pages
 volatile uint8 current_motion_page = 0;
-volatile uint8 last_motion_page = 0;
+volatile uint8 next_motion_page = 0;			// next motion page if we got new command
 
 // the new implementation of AVR libc does not allow variables passed to _delay_ms
 static inline void delay_ms(uint16 count) {
@@ -160,7 +161,7 @@ int main(void)
     while(1)
     {
 		// Check if we received a new command
-		command_flag = SerialReceiveCommand();
+		command_flag = serialReceiveCommand();
 		
 		// check if start button has been pressed and we need to do emergency stop
 		if ( start_button_pressed && bioloid_command != COMMAND_STOP )
@@ -197,16 +198,14 @@ int main(void)
 			}
 		}
 		
-		
-		// Check for button presses
-		if( button_up_pressed ) {
-			// switch on top 2 LEDs
-			led_off(ALL_LED);
-			led_on(LED_MANAGE | LED_TXD);
-			
-			// reset the variable
-			button_up_pressed = FALSE;
+		// set the new command global variable
+		if( command_flag == 1 ) {
+			new_command = TRUE;
+			command_flag = 0;
 		}
+
+		// execute motions
+		executeMotionSequence();
 		
     } // end of main command loop
 

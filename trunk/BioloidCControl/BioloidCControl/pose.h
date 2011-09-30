@@ -44,7 +44,10 @@ void calculatePoseServoSpeeds(uint16 time);
 //          (uint16)  array of goal positions for the actuators
 //          (uint8)   flag = 0 don't wait for motion to finish
 //					  flag = 1 wait for motion to finish and check alarms
-void moveToGoalPose(uint16 time, uint16 goal[], uint8 wait_flag);
+// Returns	(int)	  -1  - communication error
+//					   0  - all ok
+//					   1  - alarm
+int moveToGoalPose(uint16 time, uint16 goal[], uint8 wait_flag);
 
 // Assume default pose (Balance - MotionPage 224)
 void moveToDefaultPose(void);

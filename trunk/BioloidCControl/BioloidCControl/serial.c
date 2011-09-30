@@ -15,6 +15,7 @@
 #include <avr/interrupt.h>
 #include <string.h>
 #include <ctype.h>
+#include <avr/pgmspace.h>
 #include "global.h"
 #include "serial.h"
 
@@ -37,17 +38,20 @@ const char COMMANDSTR13[] PROGMEM = "WFLT";
 const char COMMANDSTR14[] PROGMEM = "WFRT";
 const char COMMANDSTR15[] PROGMEM = "WBLT";
 const char COMMANDSTR16[] PROGMEM = "WBRT";
-const char COMMANDSTR17[] PROGMEM = "SIT ";
-const char COMMANDSTR18[] PROGMEM = "BAL ";
-const char COMMANDSTR19[] PROGMEM = "M   ";
-const char COMMANDSTR20[] PROGMEM = "FGUP";
-const char COMMANDSTR21[] PROGMEM = "BGUP";
+const char COMMANDSTR17[] PROGMEM = "WRDY";
+const char COMMANDSTR18[] PROGMEM = "SIT ";
+const char COMMANDSTR19[] PROGMEM = "STND";
+const char COMMANDSTR20[] PROGMEM = "BAL ";
+const char COMMANDSTR21[] PROGMEM = "M   ";
+const char COMMANDSTR22[] PROGMEM = "FGUP";
+const char COMMANDSTR23[] PROGMEM = "BGUP";
+const char COMMANDSTR24[] PROGMEM = "RSET";
 PGM_P COMMANDSTR_POINTER[] PROGMEM = { 
 COMMANDSTR0, COMMANDSTR1, COMMANDSTR2, COMMANDSTR3, COMMANDSTR4,
 COMMANDSTR5, COMMANDSTR6, COMMANDSTR7, COMMANDSTR8, COMMANDSTR9,
 COMMANDSTR10, COMMANDSTR11, COMMANDSTR12, COMMANDSTR13, COMMANDSTR14, 
 COMMANDSTR15, COMMANDSTR16, COMMANDSTR17, COMMANDSTR18, COMMANDSTR19,
-COMMANDSTR20, COMMANDSTR21 };
+COMMANDSTR20, COMMANDSTR21, COMMANDSTR22, COMMANDSTR23, COMMANDSTR24 };
 
 // set up the read buffer
 volatile unsigned char gbSerialBuffer[MAXNUM_SERIALBUFF] = {0};
@@ -60,7 +64,7 @@ extern volatile uint8 bioloid_command;			// current command
 extern volatile uint8 last_bioloid_command;		// last command
 extern volatile uint8 flag_receive_ready;		// received complete command flag
 extern volatile uint8 current_motion_page;		// current motion page
-extern volatile uint8 last_motion_page;			// last motion page (might still be in progress)
+extern volatile uint8 next_motion_page;			// next motion page if we got new command
 
 // internal function prototypes
 void serial_put_queue( unsigned char data );
@@ -151,7 +155,7 @@ void serial_init(long baudrate)
 // Checks the status flag provided by the ISR for operation
 // Returns:  int flag = 0 when no new command has been received
 //           int flag = 1 when new command has been received
-int SerialReceiveCommand()
+int serialReceiveCommand()
 {
 	char c1, c2, c3, c4, command[6], buffer[6];
 	int match;
@@ -186,6 +190,7 @@ int SerialReceiveCommand()
 	// loop over all known commands to find a match
 	for (uint8 i=0; i<NUMBER_OF_COMMANDS; i++)
 	{
+		// the command strings sit in PROGMEM - so need to use pgmspace.h macros
 		strcpy_P(buffer, (PGM_P)pgm_read_word(&(COMMANDSTR_POINTER[i])));
 		match = strcmp(	buffer, command	);
 		if ( match == 0 )
@@ -204,6 +209,36 @@ int SerialReceiveCommand()
 		}
 	}
 	
+	// find the motion page associated with the command for non-walk commands
+	if ( bioloid_command != COMMAND_NOT_FOUND && bioloid_command >= COMMAND_WALK_READY )
+	{
+		// cross-check against the definitions in global.h 
+		switch ( bioloid_command )
+		{
+			case COMMAND_WALK_READY:
+				next_motion_page = COMMAND_WALK_READY_MP;
+				break;
+			case COMMAND_SIT:
+				next_motion_page = COMMAND_SIT_MP;
+				break;
+			case COMMAND_STAND:
+				next_motion_page = COMMAND_STAND_MP;
+				break;
+			case COMMAND_BALANCE:
+				next_motion_page = COMMAND_BALANCE_MP;
+				break;
+			case COMMAND_BACK_GET_UP:
+				next_motion_page = COMMAND_BACK_GET_UP_MP;
+				break;
+			case COMMAND_FRONT_GET_UP:
+				next_motion_page = COMMAND_FRONT_GET_UP_MP;
+				break;
+			case COMMAND_RESET:
+				next_motion_page = COMMAND_RESET_MP;
+				break;
+		}
+	}
+	
 	// before we leave we need to check for special case of Motion Page command
 	if( bioloid_command == COMMAND_NOT_FOUND ) 
 	{
@@ -211,19 +246,18 @@ int SerialReceiveCommand()
 		{
 			// we definitely have a motion page, find the number
 			bioloid_command = COMMAND_MOTIONPAGE;
-			last_motion_page = current_motion_page;
-			current_motion_page = c2 - 48;	// converts ASCII to number
+			next_motion_page = c2 - 48;	// converts ASCII to number
 			// check if next character is still a number
 			if ( c3 >= '0' && c3 <= '9' )
 			{
-				current_motion_page = current_motion_page * 10;
-				current_motion_page += (c3-48); 
+				next_motion_page = current_motion_page * 10;
+				next_motion_page += (c3-48); 
 			}
 			// check if next character is still a number
 			if ( c4 >= '0' && c4 <= '9' )
 			{
-				current_motion_page = current_motion_page * 10;
-				current_motion_page += (c4-48); 
+				next_motion_page = current_motion_page * 10;
+				next_motion_page += (c4-48); 
 			}
 		}
 	}
@@ -233,7 +267,7 @@ int SerialReceiveCommand()
 	
 	// finally echo the command and write new command prompt
 	if ( bioloid_command == COMMAND_MOTIONPAGE ) {
-		printf( "%c%c%c%c - MotionPageCommand %i\n> ", c1, c2, c3, c4, current_motion_page );
+		printf( "%c%c%c%c - MotionPageCommand %i\n> ", c1, c2, c3, c4, next_motion_page );
 	} else if( bioloid_command != COMMAND_NOT_FOUND ) {
 		printf( "%c%c%c%c - Command # %i\n> ", c1, c2, c3, c4, bioloid_command );
 	} else {

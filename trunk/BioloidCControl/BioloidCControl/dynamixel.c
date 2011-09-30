@@ -83,23 +83,23 @@ void dxl_init(int baudnum)
 	}
 	
 	// set alarm LED and shutdown to prevent overheat/overload
-	commStatus = dxl_write_word(BROADCAST_ID, DXL_ALARM_LED, 36);
+	commStatus = dxl_write_byte(BROADCAST_ID, DXL_ALARM_LED, 36);
 	if(commStatus != COMM_RXSUCCESS) {
 		printf("\nDXL_ALARM_LED Broadcast - ");
 		dxl_printCommStatus(dxl_get_result());
 	}	
-	commStatus = dxl_write_word(BROADCAST_ID, DXL_ALARM_SHUTDOWN, 36);
+	commStatus = dxl_write_byte(BROADCAST_ID, DXL_ALARM_SHUTDOWN, 36);
 	if(commStatus != COMM_RXSUCCESS) {
 		printf("\nDXL_ALARM_LED Broadcast - ");
 		dxl_printCommStatus(dxl_get_result());
 	}	
 	// now set temperature and voltage limits
-	commStatus = dxl_write_word(BROADCAST_ID, DXL_TEMPERATURE_LIMIT, 70);
+	commStatus = dxl_write_byte(BROADCAST_ID, DXL_TEMPERATURE_LIMIT, 70);
 	if(commStatus != COMM_RXSUCCESS) {
 		printf("\nDXL_TEMPERATURE_LIMIT Broadcast - ");
 		dxl_printCommStatus(dxl_get_result());
 	}	
-	commStatus = dxl_write_word(BROADCAST_ID, DXL_LOW_VOLTAGE_LIMIT, 70);
+	commStatus = dxl_write_byte(BROADCAST_ID, DXL_LOW_VOLTAGE_LIMIT, 70);
 	if(commStatus != COMM_RXSUCCESS) {
 		printf("\nDXL_LOW_VOLTAGE_LIMIT Broadcast - ");
 		dxl_printCommStatus(dxl_get_result());
@@ -117,7 +117,7 @@ void dxl_init(int baudnum)
 	}	
 	_delay_ms(100);
 	// and enable torque to keep positions
-	commStatus = dxl_write_word(BROADCAST_ID, DXL_TORQUE_ENABLE, 1);
+	commStatus = dxl_write_byte(BROADCAST_ID, DXL_TORQUE_ENABLE, 1);
 	if(commStatus != COMM_RXSUCCESS) {
 		printf("\nDXL_TORQUE_ENABLE Broadcast - ");
 		dxl_printCommStatus(dxl_get_result());
