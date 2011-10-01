@@ -23,6 +23,10 @@
 #ifndef POSE_H_
 #define POSE_H_
 
+// define more readable constants for moveToGoalPose wait_flag
+#define WAIT_FOR_POSE_FINISH		1
+#define DONT_WAIT_FOR_POSE_FINISH	0
+
 // read in current servo positions to the pose. 
 void readCurrentPose();
 
