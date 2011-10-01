@@ -183,5 +183,5 @@ int moveToGoalPose(uint16 time, uint16 goal[], uint8 wait_flag)
 void moveToDefaultPose()
 {
 	// assume default pose defined 
-	moveToGoalPose(InitialPlayTime, InitialValues, 1);
+	moveToGoalPose(InitialPlayTime, InitialValues, WAIT_FOR_POSE_FINISH);
 }

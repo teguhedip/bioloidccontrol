@@ -184,8 +184,12 @@ int serialReceiveCommand()
 	command[3] = c4;
 	command[4] = 0x00;			// finish the string
 
-	// flush the queue in case we received 4 bytes
-	serial_get_queue();
+	// flush the queue in case we received more than 4 bytes
+	do 
+	{
+		// need to do it once even for 4 bytes to get rid of the 0xFF marking the end of string
+		serial_get_queue();
+	} while (serial_get_qstate() != 0);
 	
 	// loop over all known commands to find a match
 	for (uint8 i=0; i<NUMBER_OF_COMMANDS; i++)
@@ -250,13 +254,13 @@ int serialReceiveCommand()
 			// check if next character is still a number
 			if ( c3 >= '0' && c3 <= '9' )
 			{
-				next_motion_page = current_motion_page * 10;
+				next_motion_page = next_motion_page * 10;
 				next_motion_page += (c3-48); 
 			}
 			// check if next character is still a number
 			if ( c4 >= '0' && c4 <= '9' )
 			{
-				next_motion_page = current_motion_page * 10;
+				next_motion_page = next_motion_page * 10;
 				next_motion_page += (c4-48); 
 			}
 		}

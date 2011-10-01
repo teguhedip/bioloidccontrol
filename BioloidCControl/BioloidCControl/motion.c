@@ -106,6 +106,9 @@ void motionPageInit()
 			exit(-1);
 	}
 	
+	// set the initial motion state
+	motion_state = MOTION_STOPPED;
+	
 	// Motion Page pointer assignment to PROGMEM 
 	motion_pointer[0] = NULL; 
 	motion_pointer[1] = (uint8*) &MotionPage1; 
@@ -587,7 +590,7 @@ unsigned long executeMotionStep(int Step)
 		// take the time
 		step_start_time = millis();
 		// execute the pose without waiting for completion
-		moveToGoalPose(CurrentMotion.PlayTime[Step-1], goalPose, 0);
+		moveToGoalPose(CurrentMotion.PlayTime[Step-1], goalPose, DONT_WAIT_FOR_POSE_FINISH);
 		// return the start time to keep track of step timing
 		return step_start_time;
 	} else {
@@ -611,19 +614,35 @@ int setMotionPageJointFlexibility()
 		commStatus = dxl_write_byte(AX12_IDS[i], DXL_CCW_COMPLIANCE_SLOPE, complianceSlope);
 		if(commStatus != COMM_RXSUCCESS) {
 			// there has been an error, print and break
-			printf("moveToGoalPose Joint Flex %i - ", i);
+			printf("setMotionPageJointFlexibility ID%i - ", AX12_IDS[i]);
 			dxl_printCommStatus(commStatus);
 			return -1;
 		}
 		commStatus = dxl_write_byte(AX12_IDS[i], DXL_CW_COMPLIANCE_SLOPE, complianceSlope);
 		if(commStatus != COMM_RXSUCCESS) {
 			// there has been an error, print and break
-			printf("moveToGoalPose Joint Flex %i - ", i);
+			printf("setMotionPageJointFlexibility ID%i - ", AX12_IDS[i]);
 			dxl_printCommStatus(commStatus);
 			return -1;
 		}
 	}
 	return 0;
+}
+
+// Function to check for any remaining servo movement
+// Returns:  (int)	number of servos still moving
+int checkMotionStepFinished()
+{
+	uint8 moving_flag;
+	
+	// reset the flag
+	moving_flag = 0;
+		
+	for (int i=0; i<NUM_AX12_SERVOS; i++) {
+		// keep reading the moving state of servos 
+		moving_flag += dxl_read_byte( AX12_IDS[i], DXL_MOVING );
+	}		
+	return moving_flag;
 }
 
 // This function executes a single robot motion page defined in motion.h
@@ -654,14 +673,14 @@ int executeMotion(int StartPage)
 		commStatus = dxl_write_byte(AX12_IDS[i], DXL_CCW_COMPLIANCE_SLOPE, complianceSlope);
 		if(commStatus != COMM_RXSUCCESS) {
 			// there has been an error, print and break
-			printf("moveToGoalPose Joint Flex %i - ", i);
+			printf("executeMotion Joint Flex %i - ", AX12_IDS[i]);
 			dxl_printCommStatus(commStatus);
 			return 0;
 		}
 		commStatus = dxl_write_byte(AX12_IDS[i], DXL_CW_COMPLIANCE_SLOPE, complianceSlope);
 		if(commStatus != COMM_RXSUCCESS) {
 			// there has been an error, print and break
-			printf("moveToGoalPose Joint Flex %i - ", i);
+			printf("executeMotion Joint Flex %i - ", AX12_IDS[i]);
 			dxl_printCommStatus(commStatus);
 			return 0;
 		}
@@ -681,7 +700,7 @@ int executeMotion(int StartPage)
 			// take the time
 			pre_step_time = millis();
 			// execute each pose 
-			moveToGoalPose(CurrentMotion.PlayTime[s], goalPose, 0);
+			moveToGoalPose(CurrentMotion.PlayTime[s], goalPose, WAIT_FOR_POSE_FINISH);
 			// store the time
 			step_times[s] = millis() - pre_step_time;
 			
@@ -700,23 +719,6 @@ int executeMotion(int StartPage)
 	// return the page of the next motion in sequence
 	return (int) CurrentMotion.NextPage;	
 }
-
-// Function to check for any remaining servo movement
-// Returns:  (int)	number of servos still moving
-int checkMotionStepFinished()
-{
-	uint8 moving_flag;
-	
-	// reset the flag
-	moving_flag = 0;
-		
-	for (int i=0; i<NUM_AX12_SERVOS; i++) {
-		// keep reading the moving state of servos 
-		moving_flag += dxl_read_byte( AX12_IDS[i], DXL_MOVING );
-	}		
-	return moving_flag;
-}
-
 
 // This function executes the exit page motion for the  
 // current motion page
