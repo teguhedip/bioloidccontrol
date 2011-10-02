@@ -23,6 +23,7 @@
 #include "global.h"
 #include "pose.h"
 #include "motion.h"
+#include "walk.h"
 #include "motion_f.h"
 #include "dynamixel.h"
 #include "clock.h"
@@ -42,6 +43,7 @@ uint8 motion_state = 0;					// motion state as per above definitions
 unsigned long pause_start_time = 0;		// millis() at start of pause time
 uint8 current_step = 0;					// number of the current motion page step
 uint8 repeat_counter = 0;				// number of repeats of page already performed
+uint8 exit_flag = 0;					// flag indicating we are on an exit page
 
 // Global variables related to the finite state machine that governs execution
 extern volatile uint8 bioloid_command;			// current command
@@ -356,6 +358,9 @@ void executeMotionSequence()
 		// finished, update motion state
 		if ( moving_flag == 0 ) {
 			motion_state = STEP_FINISHED;
+		} else {
+			// step isn't finished yet, return
+			return;
 		}
 	} else if( motion_state == STEP_IN_PAUSE ) {
 		// check if we still need to wait for pause time to expire
@@ -363,7 +368,10 @@ void executeMotionSequence()
 		{
 			// pause is finished, update state
 			motion_state = PAUSE_FINISHED;
-		}
+		} else {
+			// pause isn't finished yet, return
+			return;
+		}		
 	}
 	
 	// Next we check for any movement related alarms - at this point the only way the
@@ -404,31 +412,58 @@ void executeMotionSequence()
 	//				6. Switch to NextPage
 	//				7. Respond to a new non-walk command 
 	//				8. Nothing to do - wait for new command
-	if ( motion_state == STEP_FINISHED || motion_state == PAUSE_FINISHED )
+	if ( current_step == CurrentMotion.Steps && (motion_state == STEP_FINISHED || motion_state == PAUSE_FINISHED) )
 	{
-		// Option 1 - switch to exit page
-		if ( current_step == CurrentMotion.Steps && bioloid_command == COMMAND_STOP )
+		// check if we just finished an exit page
+		if ( exit_flag == 1 )
 		{
-			// have reached last step in this page and now move to ExitPage
-			current_motion_page = CurrentMotion.ExitPage;
-			unpackMotion(current_motion_page);
-			if ( setMotionPageJointFlexibility() == 0 ) {
-				// joint flex values set ok, execute motion
-				current_step = 1;
-				repeat_counter = 1;
-				motion_state = STEP_IN_MOTION;
-				executeMotionStep(current_step);
-			} else {
-				// this shouldn't really happen, but we need to cater to the eventuality
-				comm_status = dxl_write_byte(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
-				motion_state = MOTION_ALARM;
-				return;
-			}
+			// yes, reset flag and change motion state and then return to not complicate things
+			exit_flag = 0;
+			motion_state = MOTION_STOPPED;
+			return;
 		}
 		
-		/***********************************************************************************************************************/
-		// needs code here to switch motion page if walk command has changed - see WALK EXECUTE for transitions between walk commands
-		/***********************************************************************************************************************/
+		// we have finished the current page - determine the next motion page
+		if ( bioloid_command == COMMAND_STOP || new_command == TRUE )
+		{
+			// Option 1 - switch to exit page
+			if ( bioloid_command == COMMAND_STOP ) {
+				current_motion_page = CurrentMotion.ExitPage;
+				exit_flag = 1;		// flag that we need to stop after the exit page
+			} 
+			// Option 2 - respond to change in walk command (seamless transitions only)
+			else if ( new_command == TRUE ) 
+			{
+				if ( walkShift() == 1 ) {
+					// walkShift already updates the current motion page
+					new_command = FALSE;
+				} else {
+					// to transition to new command we first need to execute the exit page
+					current_motion_page = CurrentMotion.ExitPage;
+					exit_flag = 1;		// flag that we need to stop after the exit page
+				}
+			}		
+		} 
+		// Option 6 - switch to NextPage motion page
+		else if ( CurrentMotion.NextPage > 0 && CurrentMotion.NextPage <= NUM_MOTION_PAGES )
+		{
+			current_motion_page = CurrentMotion.NextPage;
+		}			
+
+		// in either option we had a change of motion page - start execution
+		unpackMotion(current_motion_page);
+		if ( setMotionPageJointFlexibility() == 0 ) {
+			// joint flex values set ok, execute motion
+			current_step = 1;
+			repeat_counter = 1;
+			motion_state = STEP_IN_MOTION;
+			executeMotionStep(current_step);
+		} else {
+			// this shouldn't really happen, but we need to cater to the eventuality
+			comm_status = dxl_write_byte(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
+			motion_state = MOTION_ALARM;
+			return;
+		}
 	}	
 	
 	if ( motion_state == STEP_FINISHED )
@@ -444,7 +479,6 @@ void executeMotionSequence()
 			motion_state = PAUSE_FINISHED;
 		}
 	}	
-	
 	
 	if ( motion_state == PAUSE_FINISHED )
 	{
@@ -465,34 +499,32 @@ void executeMotionSequence()
 			motion_state = STEP_IN_MOTION;
 			executeMotionStep(current_step);
 		} 
-		// Option 6 - switch to NextPage motion page
-		else if ( current_step == CurrentMotion.Steps && CurrentMotion.NextPage > 0 && CurrentMotion.NextPage <= NUM_MOTION_PAGES )
-		{
-			// Update step, repeat and motion status
-			current_motion_page = CurrentMotion.NextPage;
-			unpackMotion(current_motion_page);
-			if ( setMotionPageJointFlexibility() == 0 ) {
-				// joint flex values set ok, execute motion
-				current_step = 1;
-				repeat_counter = 1;
-				motion_state = STEP_IN_MOTION;
-				executeMotionStep(current_step);
-			}
-		} 
 		// if we end up here we will need a new command
-		else {
+		else 
+		{
 			// nothing to do, wait for command
 			motion_state = MOTION_STOPPED;
 			current_motion_page = 0;
 		}
 	}
 	
-	// Option 7 - Respond to non-walk command - set associated motion page
+	// Option 7 - Respond to new command - set associated motion page
 	if ( motion_state == MOTION_STOPPED && new_command == TRUE )
 	{
+		// special case for walk commands we need to get walk ready if we weren't walking before
+		if( (last_bioloid_command == COMMAND_STOP || last_bioloid_command > COMMAND_WALK_READY) &&
+		    ( bioloid_command >= COMMAND_WALK_FORWARD && bioloid_command < COMMAND_WALK_READY ) ) {
+				// this is the only time we wait for a motion to finish before returning to the command loop!
+				walk_init();
+		}
+		
 		// unpack the new motion page and start the motion
 		unpackMotion(next_motion_page);
 		current_motion_page = next_motion_page;
+		// also need to set walk state if it's a walk command
+		if (bioloid_command >= COMMAND_WALK_FORWARD && bioloid_command < COMMAND_WALK_READY ) {
+			walkSetWalkState(bioloid_command);
+		}
 		if ( setMotionPageJointFlexibility() == 0 ) {
 			// joint flex values set ok, execute motion
 			current_step = 1;
@@ -712,9 +744,9 @@ int executeMotion(int StartPage)
 	
 	total_time = millis() - total_time; 
 	
-	printf("\nMotion %i Timing :", StartPage);
-	for (int s=0; s<CurrentMotion.Steps; s++) { printf(" %lu,", step_times[s]); }
-	printf(" Total: %lu", total_time);
+	// TEST: printf("\nMotion %i Timing :", StartPage);
+	// TEST: for (int s=0; s<CurrentMotion.Steps; s++) { printf(" %lu,", step_times[s]); }
+	// TEST: printf(" Total: %lu", total_time);
 	
 	// return the page of the next motion in sequence
 	return (int) CurrentMotion.NextPage;	

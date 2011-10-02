@@ -192,8 +192,9 @@ int main(void)
 			if ( adc_battery_val < LOW_VOLTAGE_CUTOFF ) {
 				// too low - play alarm and stop 
 				buzzer_playFromProgramSpace(melody5);
-				bioloid_command = last_bioloid_command;
-				last_bioloid_command = COMMAND_SIT;
+				last_bioloid_command = bioloid_command;
+				bioloid_command = COMMAND_SIT;
+				next_motion_page = COMMAND_SIT_MP;
 				command_flag = 1;
 			}
 		}

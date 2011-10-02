@@ -96,11 +96,11 @@ void calculatePoseServoSpeeds(uint16 time)
 	// read the current pose
 	readCurrentPose();
 	
-	printf("\nCalculate Pose Speeds. Time = %i \n", time);
+	// TEST: printf("\nCalculate Pose Speeds. Time = %i \n", time);
 	// determine travel for each servo 
 	for (i=0; i<NUM_AX12_SERVOS; i++)
 	{
-		printf("DXL%i Current, Goal, Travel, Speed:", i+1);
+		// TEST: printf("DXL%i Current, Goal, Travel, Speed:", i+1);
 		// find the amount of travel for each servo
 		if( goal_pose[i] > current_pose[i]) {
 			travel[i] = goal_pose[i] - current_pose[i];
@@ -119,7 +119,7 @@ void calculatePoseServoSpeeds(uint16 time)
 		if (goal_speed[i] < 16) goal_speed[i] = 16;
 		
 		// test print
-		printf(" %u, %u, %u, %u\n", current_pose[i], goal_pose[i], travel[i], goal_speed[i]);
+		// TEST: printf(" %u, %u, %u, %u\n", current_pose[i], goal_pose[i], travel[i], goal_speed[i]);
 	}
 	
 }
