@@ -22,33 +22,18 @@
 #ifndef WALK_H_
 #define WALK_H_
 
-// define the different walk commands
-#define	WALK_COMMAND_STOP				0
-#define	WALK_COMMAND_FORWARD			1
-#define	WALK_COMMAND_BACKWARD			2
-#define	WALK_COMMAND_TURN_LEFT			3
-#define	WALK_COMMAND_TURN_RIGHT			4
-#define	WALK_COMMAND_LEFT_SIDE			5
-#define	WALK_COMMAND_RIGHT_SIDE			6
-#define	WALK_COMMAND_FORWARD_LEFTSIDE	7
-#define	WALK_COMMAND_FORWARD_RIGHTSIDE	8
-#define	WALK_COMMAND_BACKWARD_LEFTSIDE	9
-#define	WALK_COMMAND_BACKWARD_RIGHTSIDE	10
-#define	WALK_COMMAND_AVOID_LEFT			11
-#define	WALK_COMMAND_AVOID_RIGHT		12
-#define	WALK_COMMAND_FORWARD_TURNLEFT	13
-#define	WALK_COMMAND_FORWARD_TURNRIGHT	14
-#define	WALK_COMMAND_BACKWARD_TURNLEFT	15
-#define	WALK_COMMAND_BACKWARD_TURNRIGHT	16
-
-
 // initialize for walking - assume walk ready pose
 void walk_init();
 
-// 
-void walkExecute(uint8 walk_command);
+// function to update the walk state
+void walkSetWalkState(int command);
 
-// 
-void walkShift(uint8 walk_command);
+// Function that allows 'seamless' transition between certain walk commands
+// Handles transitions between 1. WFWD - WFLS - WFRS and
+//                             2. WBWD - WBLS - WBRS
+// All other transitions between walk commands have to go via their exit page
+// Returns:	(int)	shift flag 0 - nothing happened
+//							   1 - new motion page set
+int walkShift();
 
 #endif /* WALK_H_ */

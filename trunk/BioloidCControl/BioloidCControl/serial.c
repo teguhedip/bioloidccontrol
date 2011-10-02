@@ -22,12 +22,12 @@
 
 // Command Strings List - kept in Flash to conserve RAM
 const char COMMANDSTR0[]  PROGMEM = "STOP";
-const char COMMANDSTR1[]  PROGMEM = "WF  ";
-const char COMMANDSTR2[]  PROGMEM = "WB  ";
+const char COMMANDSTR1[]  PROGMEM = "WFWD";
+const char COMMANDSTR2[]  PROGMEM = "WBWD";
 const char COMMANDSTR3[]  PROGMEM = "WLT ";
 const char COMMANDSTR4[]  PROGMEM = "WRT ";
-const char COMMANDSTR5[]  PROGMEM = "WLS ";
-const char COMMANDSTR6[]  PROGMEM = "WRS ";
+const char COMMANDSTR5[]  PROGMEM = "WLSD";
+const char COMMANDSTR6[]  PROGMEM = "WRSD";
 const char COMMANDSTR7[]  PROGMEM = "WFLS";
 const char COMMANDSTR8[]  PROGMEM = "WFRS";
 const char COMMANDSTR9[]  PROGMEM = "WBLS";
@@ -208,6 +208,7 @@ int serialReceiveCommand()
 		// if we get to end of loop we haven't found a match
 		if ( i== NUMBER_OF_COMMANDS-1 )
 		{
+			last_bioloid_command = bioloid_command;
 			// 0xFF means no match found
 			bioloid_command = COMMAND_NOT_FOUND;
 		}
@@ -241,6 +242,13 @@ int serialReceiveCommand()
 				next_motion_page = COMMAND_RESET_MP;
 				break;
 		}
+	} 
+	// otherwise it's easier to calculate the motion page for walk commands
+	else if( bioloid_command >= COMMAND_WALK_FORWARD && bioloid_command < COMMAND_WALK_READY )
+	{
+		// all walk command motion pages are in sequence and 12 pages apart each
+		next_motion_page = 12*(bioloid_command-1) + COMMAND_WALK_READY_MP + 1;
+
 	}
 	
 	// before we leave we need to check for special case of Motion Page command

@@ -22,9 +22,10 @@
 #include "motion_f.h"
 #include "walk.h"
 
-// define the walk ready and balance motion pages
-#define WALK_READY_MOTION	31		// same for all 3 humanoid robots
-#define BALANCE_MOTION		224		// same for all 3 humanoid robots
+// Global variables related to the finite state machine that governs execution
+extern volatile uint8 bioloid_command;			// current command
+extern volatile uint8 last_bioloid_command;		// last command
+extern volatile bool  new_command;				// flag that we got a new command
 
 // global variable that keeps the current motion page
 extern uint8 current_motion_page;
@@ -41,46 +42,143 @@ void walk_init()
 	walk_command = 0;
 	
 	// and get ready for walking!
-	executeMotionSequence(WALK_READY_MOTION);
+	current_motion_page = COMMAND_WALK_READY_MP;
+	executeMotion(current_motion_page);
 }
 
-// 
-void walkExecute(uint8 walk_command)
+// function to update the walk state
+void walkSetWalkState(int command)
 {
-	int StartPage = 0;
-	
-	// check if walk command equals current state
-	if ( walk_command == walk_state ) 
+	// the walk state simply corresponds to the command
+	walk_state = command;
+}
+
+
+// Function that allows 'seamless' transition between certain walk commands
+// Handles transitions between 1. WFWD - WFLS - WFRS and
+//                             2. WBWD - WBLS - WBRS
+// All other transitions between walk commands have to go via their exit page
+// Returns:	(int)	shift flag 0 - nothing happened
+//							   1 - new motion page set
+int walkShift()
+{
+	// first check that the current command is a walk command
+	if ( bioloid_command < COMMAND_WALK_FORWARD || bioloid_command > COMMAND_WALK_BWD_TURN_RIGHT )
 	{
-		// nothing to do, already executing the command
-		return;
-	}	
-	
-	// next check is to see if we are asking to stop
-	if ( walk_command == WALK_COMMAND_STOP )
-	{
-		// execute exit page for current motion
-		executeMotionExitPage();
-		return;
+		// nothing to do here, return
+		return 0;
 	}
 	
-	// first we need to check if we are walking already
-	if ( walk_state != 0 ) 
+	// next we deal with the special cases - walk forward related first
+	if ( walk_state == 1 && bioloid_command == COMMAND_WALK_FWD_LEFT_SIDE )
 	{
-		// we are already walking, needs different approach 
-		//walkShift(walk_command);
-		return;
-	}	
-	
-	// not walking yet, shift to WalkReady Page
-	if (current_motion_page != BALANCE_MOTION)
+		// Transition WFWD -> WFLS
+		if ( current_motion_page == 35 || current_motion_page == 39 )
+		{
+			// nothing to do yet, return
+			return 0;
+		} else {
+			// last step is finished, switch motion page
+			current_motion_page = 108;
+			walk_state = 7;
+			return 1;
+		} 
+	} else if ( walk_state == 1 && bioloid_command == COMMAND_WALK_FWD_RIGHT_SIDE )
 	{
-		// get ready for walking
-		executeMotionSequence(WALK_READY_MOTION);
-	}
+		// Transition WFWD -> WFRS
+		if ( current_motion_page == 33 || current_motion_page == 37 )
+		{
+			// nothing to do yet, return
+			return 0;
+		} else {
+			// last step is finished, switch motion page
+			current_motion_page = 122;
+			walk_state = 8;
+			return 1;
+		} 
+	} else if ( walk_state == 7 && (bioloid_command == COMMAND_WALK_FWD_RIGHT_SIDE || bioloid_command == COMMAND_WALK_FORWARD) )
+	{
+		// Transition WFLS -> WFRS or WFWD
+		if ( current_motion_page == 111 )
+		{
+			// nothing to do yet, return
+			return 0;
+		} else {
+			// last step is finished, switch motion page
+			current_motion_page = 36;
+			walk_state = 1;
+			return 1;
+		} 
+	} else if ( walk_state == 8 && (bioloid_command == COMMAND_WALK_FWD_LEFT_SIDE || bioloid_command == COMMAND_WALK_FORWARD) )
+	{
+		// Transition WFRS -> WFLS or WFWD
+		if ( current_motion_page == 121 )
+		{
+			// nothing to do yet, return
+			return 0;
+		} else {
+			// last step is finished, switch motion page
+			current_motion_page = 38;
+			walk_state = 1;
+			return 1;
+		} 
+	}		
+
+	// now the walk backward related special cases 
+	if ( walk_state == 2 && bioloid_command == COMMAND_WALK_BWD_LEFT_SIDE )
+	{
+		// Transition WBWD -> WBLS
+		if ( current_motion_page == 45 || current_motion_page == 49 )
+		{
+			// nothing to do yet, return
+			return 0;
+		} else {
+			// last step is finished, switch motion page
+			current_motion_page = 134;
+			walk_state = 9;
+			return 1;
+		} 
+	} else if ( walk_state == 2 && bioloid_command == COMMAND_WALK_BWD_RIGHT_SIDE )
+	{
+		// Transition WBWD -> WBRS
+		if ( current_motion_page == 47 || current_motion_page == 51 )
+		{
+			// nothing to do yet, return
+			return 0;
+		} else {
+			// last step is finished, switch motion page
+			current_motion_page = 144;
+			walk_state = 10;
+			return 1;
+		} 
+	} else if ( walk_state == 9 && (bioloid_command == COMMAND_WALK_BWD_RIGHT_SIDE || bioloid_command == COMMAND_WALK_BACKWARD) )
+	{
+		// Transition WBLS -> WBRS or WBWD
+		if ( current_motion_page == 133 )
+		{
+			// nothing to do yet, return
+			return 0;
+		} else {
+			// last step is finished, switch motion page
+			current_motion_page = 50;
+			walk_state = 2;
+			return 1;
+		} 
+	} else if ( walk_state == 10 && (bioloid_command == COMMAND_WALK_BWD_LEFT_SIDE || bioloid_command == COMMAND_WALK_BACKWARD) )
+	{
+		// Transition WBRS -> WBLS or WBWD
+		if ( current_motion_page == 147 )
+		{
+			// nothing to do yet, return
+			return 0;
+		} else {
+			// last step is finished, switch motion page
+			current_motion_page = 48;
+			walk_state = 2;
+			return 1;
+		} 
+	}		
 	
-	// now we can calculate the motion page for the walk command
-	// all walk command motion pages are in sequence and 12 pages apart each
-	StartPage = 12*(walk_command-1) + WALK_READY_MOTION + 1;
-	executeMotionSequence(StartPage);
+	// in all other cases nothing happened
+	return 0;
 }
