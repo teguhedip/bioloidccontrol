@@ -108,7 +108,7 @@ static inline void delay_ms(uint16 count) {
 int main(void)
 {
 	// local variables
-	int	sensor_flag, command_flag, comm_status, slip_flag;
+	int	sensor_flag, command_flag, comm_status;
 	
 	// Initialization Routines
 	led_init();				// switches all 6 LEDs on
@@ -152,7 +152,7 @@ int main(void)
 	dxl_init(DEFAULT_BAUDNUMBER);
 
 	// assume initial pose
-	moveToDefaultPose();
+	executeMotion(COMMAND_BALANCE_MP);
 
 	// write out the command prompt
 	printf(	"\nReady for command.\n> ");
@@ -167,7 +167,7 @@ int main(void)
 		if ( start_button_pressed && bioloid_command != COMMAND_STOP )
 		{
 			// disable torque & reset current command
-			comm_status = dxl_write_word(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
+			comm_status = dxl_write_byte(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
 			last_bioloid_command = bioloid_command;
 			bioloid_command = COMMAND_STOP;
 			command_flag = 1;
@@ -185,9 +185,23 @@ int main(void)
 		// Check if we need to read the sensors 
 		sensor_flag = adc_readSensors();
 		if ( sensor_flag == 1 ) {
+			// TEST: printf("\nADC Gyro X = %i, Y= %i", adc_sensor_val[ADC_GYROX-1], adc_sensor_val[ADC_GYROY-1]);
+			
 			// did read sensors - check if robot slipped
-			if( adc_sensor_val[ADC_GYROX-1] - adc_gyrox_center > GYROX_SLIP_ERROR ) slip_flag = -1;  // forward slip
-			if( adc_sensor_val[ADC_GYROX-1] - adc_gyrox_center < -GYROX_SLIP_ERROR ) slip_flag = 1;	 // backward slip
+			if( (int16) adc_sensor_val[ADC_GYROX-1] - (int16) adc_gyrox_center > GYROX_SLIP_ERROR ) {
+				// backward slip
+				last_bioloid_command = bioloid_command;
+				bioloid_command = COMMAND_BACK_GET_UP;
+				next_motion_page = COMMAND_BACK_GET_UP_MP;
+				command_flag = 1;
+			}
+			else if( (int16) adc_gyrox_center - (int16) adc_sensor_val[ADC_GYROX-1]  > GYROX_SLIP_ERROR ) {
+				// forward slip
+				last_bioloid_command = bioloid_command;
+				bioloid_command = COMMAND_FRONT_GET_UP;
+				next_motion_page = COMMAND_FRONT_GET_UP_MP;
+				command_flag = 1;
+			}
 			// check battery voltage still within limits
 			if ( adc_battery_val < LOW_VOLTAGE_CUTOFF ) {
 				// too low - play alarm and stop 
@@ -204,7 +218,10 @@ int main(void)
 			new_command = TRUE;
 			command_flag = 0;
 		}
-
+		
+		// TEST: 
+		printf("\n Command %i, New %i, MP %i, Next MP %i ", bioloid_command, new_command, current_motion_page, next_motion_page);
+		
 		// execute motions
 		executeMotionSequence();
 		

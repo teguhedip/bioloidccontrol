@@ -62,7 +62,7 @@ extern "C" {
 // Top level ADC/Sensor related parameters - adjust as needed
 #define SENSOR_READ_INTERVAL	100		// read gyro/DMS every 100ms 
 #define BATTERY_READ_INTERVAL	1000	// read battery once every second
-#define GYROX_SLIP_ERROR		200		// deviation from center interpreted as a slip
+#define GYROX_SLIP_ERROR		150		// deviation from 0 interpreted as a slip (150 = 220deg/s rotation)
 #define LOW_VOLTAGE_CUTOFF		10500	// 10.5V is a very safe limit for a 11.7V LiPo
 
 // Command List
@@ -104,7 +104,7 @@ extern "C" {
 #define COMMAND_WALK_READY_MP			31
 #define COMMAND_SIT_MP					25
 #define COMMAND_STAND_MP				26
-#define COMMAND_BALANCE_MP				224
+#define COMMAND_BALANCE_MP				14
 #define COMMAND_FRONT_GET_UP_MP			27
 #define COMMAND_BACK_GET_UP_MP			28
 #define COMMAND_RESET_MP				26

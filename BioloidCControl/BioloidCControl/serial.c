@@ -248,7 +248,6 @@ int serialReceiveCommand()
 	{
 		// all walk command motion pages are in sequence and 12 pages apart each
 		next_motion_page = 12*(bioloid_command-1) + COMMAND_WALK_READY_MP + 1;
-
 	}
 	
 	// before we leave we need to check for special case of Motion Page command
