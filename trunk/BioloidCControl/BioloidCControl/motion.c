@@ -127,7 +127,7 @@ void motionPageInit()
 	motion_pointer[12] = (uint8*) &MotionPage12; 
 	motion_pointer[13] = (uint8*) &MotionPage13; 
 	motion_pointer[14] = (uint8*) &MotionPage14; 
-	motion_pointer[15] = (uint8*) &MotionPage15; 
+/*	motion_pointer[15] = (uint8*) &MotionPage15; 
 	motion_pointer[16] = (uint8*) &MotionPage16; 
 	motion_pointer[17] = (uint8*) &MotionPage17; 
 	motion_pointer[18] = (uint8*) &MotionPage18; 
@@ -136,7 +136,7 @@ void motionPageInit()
 	motion_pointer[21] = (uint8*) &MotionPage21; 
 	motion_pointer[22] = (uint8*) &MotionPage22; 
 	motion_pointer[23] = (uint8*) &MotionPage23; 
-	motion_pointer[24] = (uint8*) &MotionPage24; 
+	motion_pointer[24] = (uint8*) &MotionPage24; */
 	motion_pointer[25] = (uint8*) &MotionPage25; 
 	motion_pointer[26] = (uint8*) &MotionPage26; 
 	motion_pointer[27] = (uint8*) &MotionPage27; 
@@ -349,12 +349,17 @@ void executeMotionSequence()
 	uint8 moving_flag;
 	int error_status, comm_status;
 	
+	// TEST: 
+	printf("\nMotion State = %i, Current Step = %i", motion_state, current_step);
+	
 	// check the states in order of likelihood of occurrence
 	// the most likely state is that a motion step is still being executed or paused
 	if ( motion_state == STEP_IN_MOTION )
 	{
 		// last state was step in motion - check if finished
 		moving_flag = checkMotionStepFinished();
+		// TEST: printf(", Moving Flag = %i", moving_flag);
+		
 		// finished, update motion state
 		if ( moving_flag == 0 ) {
 			motion_state = STEP_FINISHED;
@@ -412,6 +417,8 @@ void executeMotionSequence()
 	//				6. Switch to NextPage
 	//				7. Respond to a new non-walk command 
 	//				8. Nothing to do - wait for new command
+	
+	// first we deal with state changes at the end of a motion page
 	if ( current_step == CurrentMotion.Steps && (motion_state == STEP_FINISHED || motion_state == PAUSE_FINISHED) )
 	{
 		// check if we just finished an exit page
@@ -424,33 +431,63 @@ void executeMotionSequence()
 		}
 		
 		// we have finished the current page - determine the next motion page
-		if ( bioloid_command == COMMAND_STOP || new_command == TRUE )
+		if ( bioloid_command == COMMAND_STOP )
 		{
-			// Option 1 - switch to exit page
-			if ( bioloid_command == COMMAND_STOP ) {
+		// Option 1 - switch to exit page
+			if ( CurrentMotion.ExitPage == 0 ) {
+				// no exit page, stop
+				motion_state = MOTION_STOPPED;
+				return;
+			} else {
+				// need to execute an Exit Page before stopping		
 				current_motion_page = CurrentMotion.ExitPage;
 				exit_flag = 1;		// flag that we need to stop after the exit page
-			} 
-			// Option 2 - respond to change in walk command (seamless transitions only)
-			else if ( new_command == TRUE ) 
-			{
-				if ( walkShift() == 1 ) {
-					// walkShift already updates the current motion page
-					new_command = FALSE;
+			}
+		} 
+		// Option 2 - respond to change in walk command (seamless transitions only)
+		else if ( new_command == TRUE ) 
+		{
+			if ( walkShift() == 1 ) {
+				// walkShift already updates the current motion page
+				new_command = FALSE;
+			} else {
+				// to transition to new command we first need to execute the exit page
+				if ( CurrentMotion.ExitPage == 0 ) {
+					// no exit page
+					current_motion_page = 0;
+					motion_state = MOTION_STOPPED;
+					return;
 				} else {
-					// to transition to new command we first need to execute the exit page
+					// need to execute an Exit Page before new command		
 					current_motion_page = CurrentMotion.ExitPage;
 					exit_flag = 1;		// flag that we need to stop after the exit page
-				}
-			}		
+				}				
+			}	
+		} 
+		// Option 5 - repeat the current motion page
+		else if ( CurrentMotion.RepeatTime > repeat_counter )
+		{
+			// Update step, repeat counter and motion status
+			current_step = 1;
+			repeat_counter++;
+			motion_state = STEP_IN_MOTION;
+			// can go straight to executing step 1 since we have executed this page before
+			executeMotionStep(current_step);
+			return;
 		} 
 		// Option 6 - switch to NextPage motion page
 		else if ( CurrentMotion.NextPage > 0 && CurrentMotion.NextPage <= NUM_MOTION_PAGES )
 		{
 			current_motion_page = CurrentMotion.NextPage;
-		}			
+		}
+		// Nothing else to do - stop motion
+		else
+		{
+			motion_state = MOTION_STOPPED;
+			return;
+		}
 
-		// in either option we had a change of motion page - start execution
+		// in Options 1,2,6 above we had a change of motion page - start execution
 		unpackMotion(current_motion_page);
 		if ( setMotionPageJointFlexibility() == 0 ) {
 			// joint flex values set ok, execute motion
@@ -462,10 +499,13 @@ void executeMotionSequence()
 			// this shouldn't really happen, but we need to cater to the eventuality
 			comm_status = dxl_write_byte(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
 			motion_state = MOTION_ALARM;
-			return;
 		}
+		
+		// either way we are finished here - return
+		return;
 	}	
 	
+	// now we can deal with state changes during page execution
 	if ( motion_state == STEP_FINISHED )
 	{
 		// Option 3 - start pause after step
@@ -478,34 +518,26 @@ void executeMotionSequence()
 			// no pause required, go straight to executing next step
 			motion_state = PAUSE_FINISHED;
 		}
+		return;
 	}	
-	
-	if ( motion_state == PAUSE_FINISHED )
+	else if ( motion_state == PAUSE_FINISHED )
 	{
 		// Option 4 - execute next step in this motion page
-		if ( current_step != CurrentMotion.Steps )
+		if ( current_step < CurrentMotion.Steps )
 		{
 			// Update step and motion status
 			current_step++;
 			motion_state = STEP_IN_MOTION;
 			executeMotionStep(current_step);
 		}
-		// Option 5 - repeat the current motion page
-		else if ( current_step == CurrentMotion.Steps && CurrentMotion.RepeatTime > repeat_counter )
-		{
-			// Update step, repeat and motion status
-			current_step = 1;
-			repeat_counter++;
-			motion_state = STEP_IN_MOTION;
-			executeMotionStep(current_step);
-		} 
-		// if we end up here we will need a new command
+		// should never end up here
 		else 
 		{
-			// nothing to do, wait for command
+			// reset to default
 			motion_state = MOTION_STOPPED;
 			current_motion_page = 0;
 		}
+		return;
 	}
 	
 	// Option 7 - Respond to new command - set associated motion page
@@ -518,21 +550,31 @@ void executeMotionSequence()
 				walk_init();
 		}
 		
-		// unpack the new motion page and start the motion
-		unpackMotion(next_motion_page);
-		current_motion_page = next_motion_page;
-		// also need to set walk state if it's a walk command
-		if (bioloid_command >= COMMAND_WALK_FORWARD && bioloid_command < COMMAND_WALK_READY ) {
-			walkSetWalkState(bioloid_command);
-		}
-		if ( setMotionPageJointFlexibility() == 0 ) {
-			// joint flex values set ok, execute motion
-			current_step = 1;
-			repeat_counter = 1;
-			motion_state = STEP_IN_MOTION;
-			executeMotionStep(current_step);
+		if ( bioloid_command != COMMAND_STOP )
+		{
+			// unpack the new motion page and start the motion
+			unpackMotion(next_motion_page);
+			current_motion_page = next_motion_page;
+			next_motion_page = 0;
+			// also need to set walk state if it's a walk command
+			if (bioloid_command >= COMMAND_WALK_FORWARD && bioloid_command < COMMAND_WALK_READY ) {
+				walkSetWalkState(bioloid_command);
+			}
+			if ( setMotionPageJointFlexibility() == 0 ) {
+				// joint flex values set ok, execute motion
+				current_step = 1;
+				repeat_counter = 1;
+				motion_state = STEP_IN_MOTION;
+				executeMotionStep(current_step);
+				new_command = FALSE;
+			}		
+		} else {
+			// execute STOP command
+			current_motion_page = 0;
+			next_motion_page = 0;
 			new_command = FALSE;
-		}		
+			motion_state = MOTION_STOPPED;
+		}
 	} 
 	// Option 8 - Nothing to do - keep waiting for new command
 	else {
@@ -581,6 +623,18 @@ void unpackMotion(int StartPage)
 			packed_step_values = packed_step_values >> 11;
 			CurrentMotion.StepValues[s][3*i] = packed_step_values & 0x3FF;
 		}
+		// Sanity Check - if the values are outside the overall Min/Max values we are probably accessing random memory
+		for (i=0; i<NUM_AX12_SERVOS; i++)
+		{
+			if ( CurrentMotion.StepValues[s][i] > SERVO_MAX_VALUES[i] || CurrentMotion.StepValues[s][i] < SERVO_MIN_VALUES[i] )
+			{
+				// obviously have unpacked rubbish, stop right here
+				printf("\nUnpack Motion Page %i, Step %i - rubbish data. STOP.", StartPage, s+1);
+				printf("\nServo ID%i, Step Value = %i, Min = %i, Max = %i \n", AX12_IDS[i], CurrentMotion.StepValues[s][i], SERVO_MIN_VALUES[i],SERVO_MAX_VALUES[i] );
+				exit(-1);
+			}
+		}
+		
 	}
 
 	// and finally the play and pause times (in ms)
