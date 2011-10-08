@@ -16,6 +16,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <avr/pgmspace.h>
+#include <util/delay.h>
 #include "global.h"
 #include "serial.h"
 
@@ -72,6 +73,13 @@ unsigned char serial_get_queue(void);
 int std_putchar(char c,  FILE* stream);
 int std_getchar( FILE* stream );
 
+// the new implementation of AVR libc does not allow variables passed to _delay_ms
+static inline void delay_ms(uint16 count) {
+	while(count--) { 
+		_delay_ms(1); 
+	} 
+}
+
 
 // ISR for serial receive, Serial Port/ZigBEE use USART1
 SIGNAL(USART1_RX_vect)
@@ -103,6 +111,18 @@ SIGNAL(USART1_RX_vect)
 void serial_init(long baudrate)
 {
 	unsigned short Divisor;
+
+	// in case of ZigBee comms, enable the device
+#ifdef ZIG_2_SERIAL
+	DDRC  = 0x7F;
+	PORTC = 0x7E;
+	// to enable ZigBee communications we need PD5=low, PD6=high, make PD7 input and turn off pull-up on PD7
+	PORTD &= ~0x80; 
+	PORTD &= ~0x20; 
+	PORTD |= 0x40; 
+	// we need to wait for the connection to get established
+	delay_ms(500);
+#endif
 
 	// set UART register A
 	//Bit 7: USART Receive Complete

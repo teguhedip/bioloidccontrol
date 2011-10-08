@@ -132,16 +132,6 @@ typedef uint8_t		bool;
 #define DIV(Dividend,Divisor) (((Dividend+((Divisor)>>1))/(Divisor)))
 
 // ADC
-//     When using IR sensors, must wait ~12 ms between enabling IR PORT
-//     and starting conversion
-// ADC Enable, Clock 1/64div. prescaler 
-#define	ADC_ENABLE		ADCSRA = (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1)
-// Define which ADC pin to use (also sets reference voltage to AREF pin (5V?))
-#define ADC_SELECT(x)	ADMUX = x
-// Clear ADC conversion flag, then begin new conversion
-#define ADC_BEGIN		ADCSRA |= (1 << ADIF); ADCSRA |= (1 << ADSC)
-// True while conversion incomplete (e.g. 'while (ADC_INCOMPLETE);' )
-#define ADC_INCOMPLETE	!(ADCSRA & (1 << ADIF))
 // number of allowed ADC channels (6 on the CM-510)
 #define ADC_CHANNELS	6
 // PORTF ADC port pins available
