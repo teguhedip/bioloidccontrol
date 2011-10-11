@@ -78,7 +78,6 @@ void waitForPoseFinish()
 		}
 		first_loop = 1;
 	} while (moving_flag > 0);
-
 }
 
 // Calculate servo speeds to achieve desired pose timing
@@ -94,7 +93,7 @@ void calculatePoseServoSpeeds(uint16 time)
 	uint32 factor;
 
 	// read the current pose
-	readCurrentPose();
+	readCurrentPose();  // takes 6ms
 	
 	// TEST: printf("\nCalculate Pose Speeds. Time = %i \n", time);
 	// determine travel for each servo 
@@ -115,10 +114,9 @@ void calculatePoseServoSpeeds(uint16 time)
 		goal_speed[i] = (uint16) ( factor / time );
 		// if the desired speed exceeds the maximum, we need to adjust
 		if (goal_speed[i] > 1023) goal_speed[i] = 1023;
-		// we also use a minimum speed of 16 (no science behind this)
-		if (goal_speed[i] < 16) goal_speed[i] = 16;
+		// we also use a minimum speed of 26 (5% of 530 the max value for 59RPM)
+		if (goal_speed[i] < 26) goal_speed[i] = 26;
 		
-		// test print
 		// TEST: printf(" %u, %u, %u, %u\n", current_pose[i], goal_pose[i], travel[i], goal_speed[i]);
 	}
 	
@@ -157,6 +155,7 @@ int moveToGoalPose(uint16 time, uint16 goal[], uint8 wait_flag)
 		return -1;
 	}
 	
+	// only wait for pose to finish if requested to do so
 	if( wait_flag == 1 )
 	{
 		// wait for the movement to finish

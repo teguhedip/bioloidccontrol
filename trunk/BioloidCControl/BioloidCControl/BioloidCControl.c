@@ -40,6 +40,7 @@
 #include "pose.h"
 #include "motion_f.h"
 #include "clock.h"
+#include "walk.h"
 
 // Array showing which Dynamixel servos are enabled (ID from 0 to 25)
 #ifdef HUMANOID_TYPEA
@@ -153,11 +154,14 @@ int main(void)
 
 	// assume initial pose
 	executeMotion(COMMAND_BALANCE_MP);
+	
+	// set the walk state
+	walkSetWalkState(0);
 
 	// write out the command prompt
 	printf(	"\nReady for command.\n> ");
 
-	// main command loop
+	// main command loop (takes 12ms when nothing idle)
     while(1)
     {
 		// Check if we received a new command
@@ -219,8 +223,7 @@ int main(void)
 			command_flag = 0;
 		}
 		
-		// TEST: 
-		printf("\n Command %i, New %i, MP %i, Next MP %i ", bioloid_command, new_command, current_motion_page, next_motion_page);
+		// TEST: printf("\n Command %i, New %i, MP %i, Next MP %i ", bioloid_command, new_command, current_motion_page, next_motion_page);
 		
 		// execute motions
 		executeMotionSequence();
