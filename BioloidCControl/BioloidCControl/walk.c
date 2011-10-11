@@ -18,8 +18,10 @@
  * to be responsible for all resulting costs and damages.
  */
 
+#include <stdio.h>
 #include "global.h"
 #include "motion_f.h"
+#include "dynamixel.h"
 #include "walk.h"
 
 // Global variables related to the finite state machine that governs execution
@@ -37,6 +39,8 @@ static uint8 walk_state = 0;
 // initialize for walking - assume walk ready pose
 void walk_init()
 {
+	int commStatus = 0;
+	
 	// reset walk state and command
 	walk_state = 0;
 	walk_command = 0;
@@ -44,6 +48,13 @@ void walk_init()
 	// and get ready for walking!
 	current_motion_page = COMMAND_WALK_READY_MP;
 	executeMotion(current_motion_page);
+	
+	// experimental - increase punch for walking
+	commStatus = dxl_write_word(BROADCAST_ID, DXL_PUNCH_L, 100);
+	if(commStatus != COMM_RXSUCCESS) {
+		printf("\nDXL_PUNCH Broadcast - ");
+		dxl_printCommStatus(dxl_get_result());
+	}	
 }
 
 // function to update the walk state
@@ -53,6 +64,13 @@ void walkSetWalkState(int command)
 	walk_state = command;
 }
 
+// function to retrieve the walk state
+// Returns (int) walk state
+int walkGetWalkState()
+{
+	// return current walk state
+	return walk_state;
+}
 
 // Function that allows 'seamless' transition between certain walk commands
 // Handles transitions between 1. WFWD - WFLS - WFRS and

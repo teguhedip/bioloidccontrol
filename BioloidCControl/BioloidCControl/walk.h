@@ -28,6 +28,10 @@ void walk_init();
 // function to update the walk state
 void walkSetWalkState(int command);
 
+// function to retrieve the walk state
+// Returns (int) walk state
+int walkGetWalkState();
+
 // Function that allows 'seamless' transition between certain walk commands
 // Handles transitions between 1. WFWD - WFLS - WFRS and
 //                             2. WBWD - WBLS - WBRS

@@ -39,11 +39,14 @@
 #define ROBOT_SLIPPED		8
 
 // and create the variables that guide these functions
-uint8 motion_state = 0;					// motion state as per above definitions
+uint8 motion_state = 7;					// motion state as per above definitions
 unsigned long pause_start_time = 0;		// millis() at start of pause time
 uint8 current_step = 0;					// number of the current motion page step
 uint8 repeat_counter = 0;				// number of repeats of page already performed
 uint8 exit_flag = 0;					// flag indicating we are on an exit page
+
+// timing variables
+unsigned long step_start_time = 0, step_finish_time = 0, block_time = 0;
 
 // Global variables related to the finite state machine that governs execution
 extern volatile uint8 bioloid_command;			// current command
@@ -346,27 +349,36 @@ void motionPageInit()
 // Code is meant to be reentrant so it can easily be converted to a task with a RTOS
 void executeMotionSequence()
 {
-	uint8 moving_flag;
-	int error_status, comm_status;
+	uint8 moving_flag, temp1;
+	int error_status, comm_status, left_right_step;
 	
-	// TEST: 
-	printf("\nMotion State = %i, Current Step = %i", motion_state, current_step);
+	// TEST: if ( motion_state != MOTION_STOPPED ) printf("\nMotion State = %i, Walk State = %i, Current Step = %i", motion_state, walkGetWalkState(), current_step);
 	
 	// check the states in order of likelihood of occurrence
 	// the most likely state is that a motion step is still being executed or paused
 	if ( motion_state == STEP_IN_MOTION )
 	{
-		// last state was step in motion - check if finished
-		moving_flag = checkMotionStepFinished();
-		// TEST: printf(", Moving Flag = %i", moving_flag);
-		
-		// finished, update motion state
-		if ( moving_flag == 0 ) {
-			motion_state = STEP_FINISHED;
-		} else {
-			// step isn't finished yet, return
-			return;
-		}
+		// if walking we can't wait for motion to finish, go by step time instead
+		if( walkGetWalkState() != 0 ) {
+			if ( (millis()-step_start_time) >= CurrentMotion.PlayTime[current_step-1] ) {
+				// step time is up, update state
+				motion_state = STEP_FINISHED;
+			} else {
+				// play time isn't finished yet, return
+				return;
+			}
+		} else {				
+			// last state was step in motion - check if finished
+			moving_flag = checkMotionStepFinished();
+			// finished, update motion state
+			if ( moving_flag == 0 ) {
+				motion_state = STEP_FINISHED;
+				step_finish_time = millis();
+			} else {
+				// step isn't finished yet, return
+				return;
+			}
+		}		
 	} else if( motion_state == STEP_IN_PAUSE ) {
 		// check if we still need to wait for pause time to expire
 		if ( (millis()-pause_start_time) >= CurrentMotion.PauseTime[current_step-1] )
@@ -381,9 +393,10 @@ void executeMotionSequence()
 	
 	// Next we check for any movement related alarms - at this point the only way the
 	// motion state can be STEP_FINISHED is because it was changed above
-	if ( motion_state == STEP_FINISHED )
+	// Given this takes 11ms, that's too long for walking (may have to revisit)
+	if ( motion_state == STEP_FINISHED && walkGetWalkState() == 0 )
 	{
-		// check that executing the last step didn't cause any alarms
+		// check that executing the last step didn't cause any alarms (takes 5ms)
 		for (uint8 i=0; i<NUM_AX12_SERVOS; i++) {
 			// ping the servo and unpack error code (if any)
 			error_status = dxl_ping(AX12_IDS[i]);
@@ -395,7 +408,7 @@ void executeMotionSequence()
 				return;
 			}
 		}	
-		// all ok, read back current pose
+		// all ok, read back current pose (takes 6ms)
 		readCurrentPose();	
 	}
 	
@@ -472,7 +485,7 @@ void executeMotionSequence()
 			repeat_counter++;
 			motion_state = STEP_IN_MOTION;
 			// can go straight to executing step 1 since we have executed this page before
-			executeMotionStep(current_step);
+			step_start_time = executeMotionStep(current_step);
 			return;
 		} 
 		// Option 6 - switch to NextPage motion page
@@ -494,7 +507,7 @@ void executeMotionSequence()
 			current_step = 1;
 			repeat_counter = 1;
 			motion_state = STEP_IN_MOTION;
-			executeMotionStep(current_step);
+			step_start_time = executeMotionStep(current_step);
 		} else {
 			// this shouldn't really happen, but we need to cater to the eventuality
 			comm_status = dxl_write_byte(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
@@ -514,13 +527,14 @@ void executeMotionSequence()
 			// set the timer for the pause
 			pause_start_time = millis();
 			motion_state = STEP_IN_PAUSE;
+			return;
 		} else {
 			// no pause required, go straight to executing next step
 			motion_state = PAUSE_FINISHED;
 		}
-		return;
 	}	
-	else if ( motion_state == PAUSE_FINISHED )
+	
+	if ( motion_state == PAUSE_FINISHED )
 	{
 		// Option 4 - execute next step in this motion page
 		if ( current_step < CurrentMotion.Steps )
@@ -528,7 +542,7 @@ void executeMotionSequence()
 			// Update step and motion status
 			current_step++;
 			motion_state = STEP_IN_MOTION;
-			executeMotionStep(current_step);
+			step_start_time = executeMotionStep(current_step);
 		}
 		// should never end up here
 		else 
@@ -548,6 +562,24 @@ void executeMotionSequence()
 		    ( bioloid_command >= COMMAND_WALK_FORWARD && bioloid_command < COMMAND_WALK_READY ) ) {
 				// this is the only time we wait for a motion to finish before returning to the command loop!
 				walk_init();
+		} 
+		// special case of shifting between walk commands - non-seamless transitions
+		else if ( walkGetWalkState() > 0 && (bioloid_command >= COMMAND_WALK_FORWARD && bioloid_command < COMMAND_WALK_READY) )
+		{
+				// calculate the page number relative to start of previous command
+				left_right_step = current_motion_page - COMMAND_WALK_READY_MP;
+				temp1 = left_right_step / 12U;
+				left_right_step -= temp1 * 12;
+				// check if we finished on left or right step
+				if ( left_right_step == 10 ) {
+					// right step is next
+					left_right_step = 2;
+				} else {
+					// left step is next
+					left_right_step = 0;
+				}
+				// can calculate next motion page as in WALK EXECUTE 
+				next_motion_page = (bioloid_command-1)*12 + COMMAND_WALK_READY_MP + left_right_step + 1;
 		}
 		
 		if ( bioloid_command != COMMAND_STOP )
@@ -557,17 +589,27 @@ void executeMotionSequence()
 			current_motion_page = next_motion_page;
 			next_motion_page = 0;
 			// also need to set walk state if it's a walk command
-			if (bioloid_command >= COMMAND_WALK_FORWARD && bioloid_command < COMMAND_WALK_READY ) {
+			if ( bioloid_command >= COMMAND_WALK_FORWARD && bioloid_command < COMMAND_WALK_READY ) {
 				walkSetWalkState(bioloid_command);
+			} else {
+				// not a walk command, reset walk state
+				walkSetWalkState(0);
 			}
+			
 			if ( setMotionPageJointFlexibility() == 0 ) {
 				// joint flex values set ok, execute motion
 				current_step = 1;
 				repeat_counter = 1;
 				motion_state = STEP_IN_MOTION;
-				executeMotionStep(current_step);
+				step_start_time = executeMotionStep(current_step);
 				new_command = FALSE;
-			}		
+			} else {
+				// something went wrong when setting compliance slope
+				current_motion_page = 0;
+				next_motion_page = 0;
+				new_command = FALSE;
+				motion_state = MOTION_STOPPED;
+			}
 		} else {
 			// execute STOP command
 			current_motion_page = 0;
@@ -700,14 +742,14 @@ int setMotionPageJointFlexibility()
 		commStatus = dxl_write_byte(AX12_IDS[i], DXL_CCW_COMPLIANCE_SLOPE, complianceSlope);
 		if(commStatus != COMM_RXSUCCESS) {
 			// there has been an error, print and break
-			printf("setMotionPageJointFlexibility ID%i - ", AX12_IDS[i]);
+			printf("\nsetMotionPageJointFlexibility CCW ID%i - ", AX12_IDS[i]);
 			dxl_printCommStatus(commStatus);
 			return -1;
 		}
 		commStatus = dxl_write_byte(AX12_IDS[i], DXL_CW_COMPLIANCE_SLOPE, complianceSlope);
 		if(commStatus != COMM_RXSUCCESS) {
 			// there has been an error, print and break
-			printf("setMotionPageJointFlexibility ID%i - ", AX12_IDS[i]);
+			printf("\nsetMotionPageJointFlexibility CW ID%i - ", AX12_IDS[i]);
 			dxl_printCommStatus(commStatus);
 			return -1;
 		}
@@ -727,8 +769,12 @@ int checkMotionStepFinished()
 	for (int i=0; i<NUM_AX12_SERVOS; i++) {
 		// keep reading the moving state of servos 
 		moving_flag += dxl_read_byte( AX12_IDS[i], DXL_MOVING );
+		// if anything still moving - return
+		if ( moving_flag == 1) {
+			return moving_flag;
+		}
 	}		
-	return moving_flag;
+	return 0;
 }
 
 // This function executes a single robot motion page defined in motion.h
