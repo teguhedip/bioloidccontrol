@@ -316,25 +316,6 @@ struct //
 {0,0,0,0,0}, {2000,2000,1000,1000,2000} 
 }; 
 
-struct // Balance 
-{ 
-   const uint8 JointFlexibility[18]; 
-   const uint8 NextPage; 
-   const uint8 ExitPage; 
-   const uint8 RepeatTime; 
-   const uint8 SpeedRate10; 
-   const uint8 InertialForce; 
-   const uint8 Steps; 
-   const uint32 StepValues[1][6]; 
-   const uint16 PauseTime[1]; 
-   const uint16 PlayTime[1]; 
-} MotionPage14 PROGMEM = { 
-{7,7,5,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6}, 
-14, 0, 1, 10, 5, 1, 
-{{987275543,3121508913,1502925307,2164959914,1008237191,1578097156}}, 
-{0}, {96} 
-}; 
-/*
 struct // R blocking 
 { 
    const uint8 JointFlexibility[18]; 
@@ -568,7 +549,7 @@ struct //
  {987275543,3121508913,1502925307,2164959914,1008237191,1578097156}}, 
 {0,0}, {496,496} 
 }; 
-*/
+
 struct // Sit down 
 { 
    const uint8 JointFlexibility[18]; 
@@ -4912,7 +4893,7 @@ struct //
  {987275543,3121508913,1502925307,2164959914,1008237191,1578097156}}, 
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
-/*
+
 struct // BL_S_L 
 { 
    const uint8 JointFlexibility[18]; 
@@ -5550,9 +5531,9 @@ struct // Clap end
 {{987275543,3121508913,1502925307,2164959914,1008237191,1578097156}}, 
 {0}, {1000} 
 }; 
-*/
+
 // Number of active motion pages in this file 
-const uint8 ACTIVE_MOTION_PAGES = 199; 
+const uint8 ACTIVE_MOTION_PAGES = 225; 
 
 // Min and max values for the servo values 
 const uint16 SERVO_MAX_VALUES[18] = {833,856,770,898,537,868,512,743,541,775,611,968,524,1015,850,601,572,729}; 

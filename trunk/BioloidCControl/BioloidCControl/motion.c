@@ -44,7 +44,7 @@ unsigned long pause_start_time = 0;		// millis() at start of pause time
 uint8 current_step = 0;					// number of the current motion page step
 uint8 repeat_counter = 0;				// number of repeats of page already performed
 uint8 exit_flag = 0;					// flag indicating we are on an exit page
-
+uint8 last_joint_flex[NUM_AX12_SERVOS];		// last set of joint flex values
 // timing variables
 unsigned long step_start_time = 0, step_finish_time = 0, block_time = 0;
 
@@ -130,7 +130,7 @@ void motionPageInit()
 	motion_pointer[12] = (uint8*) &MotionPage12; 
 	motion_pointer[13] = (uint8*) &MotionPage13; 
 	motion_pointer[14] = (uint8*) &MotionPage14; 
-/*	motion_pointer[15] = (uint8*) &MotionPage15; 
+	motion_pointer[15] = (uint8*) &MotionPage15; 
 	motion_pointer[16] = (uint8*) &MotionPage16; 
 	motion_pointer[17] = (uint8*) &MotionPage17; 
 	motion_pointer[18] = (uint8*) &MotionPage18; 
@@ -139,7 +139,7 @@ void motionPageInit()
 	motion_pointer[21] = (uint8*) &MotionPage21; 
 	motion_pointer[22] = (uint8*) &MotionPage22; 
 	motion_pointer[23] = (uint8*) &MotionPage23; 
-	motion_pointer[24] = (uint8*) &MotionPage24; */
+	motion_pointer[24] = (uint8*) &MotionPage24; 
 	motion_pointer[25] = (uint8*) &MotionPage25; 
 	motion_pointer[26] = (uint8*) &MotionPage26; 
 	motion_pointer[27] = (uint8*) &MotionPage27; 
@@ -315,7 +315,7 @@ void motionPageInit()
 	motion_pointer[197] = (uint8*) &MotionPage197; 
 	motion_pointer[198] = (uint8*) &MotionPage198; 
 	motion_pointer[199] = (uint8*) &MotionPage199; 
-/*	motion_pointer[200] = (uint8*) &MotionPage200; 
+	motion_pointer[200] = (uint8*) &MotionPage200; 
 	motion_pointer[201] = (uint8*) &MotionPage201; 
 	motion_pointer[202] = (uint8*) &MotionPage202; 
 	motion_pointer[203] = (uint8*) &MotionPage203; 
@@ -340,7 +340,7 @@ void motionPageInit()
 	motion_pointer[222] = (uint8*) &MotionPage222; 
 	motion_pointer[223] = (uint8*) &MotionPage223; 
 	motion_pointer[224] = (uint8*) &MotionPage224; 
-	motion_pointer[225] = (uint8*) &MotionPage225; */
+	motion_pointer[225] = (uint8*) &MotionPage225; 
 }
 
 // This function executes robot motions consisting of one or more motion 
@@ -737,22 +737,28 @@ int setMotionPageJointFlexibility()
 
 	// now we can process the joint flexibility values
 	for (uint8 i=0; i<NUM_AX12_SERVOS; i++) {
-		// translation is bit shift operation (see AX-12 manual)
-		complianceSlope = 1<<CurrentMotion.JointFlex[i]; 
-		commStatus = dxl_write_byte(AX12_IDS[i], DXL_CCW_COMPLIANCE_SLOPE, complianceSlope);
-		if(commStatus != COMM_RXSUCCESS) {
-			// there has been an error, print and break
-			printf("\nsetMotionPageJointFlexibility CCW ID%i - ", AX12_IDS[i]);
-			dxl_printCommStatus(commStatus);
-			return -1;
+		// update is only required if different from last set of values
+		if ( last_joint_flex[i] != CurrentMotion.JointFlex[i] )
+		{
+			// translation is bit shift operation (see AX-12 manual)
+			complianceSlope = 1<<CurrentMotion.JointFlex[i]; 
+			commStatus = dxl_write_byte(AX12_IDS[i], DXL_CCW_COMPLIANCE_SLOPE, complianceSlope);
+			if(commStatus != COMM_RXSUCCESS) {
+				// there has been an error, print and break
+				printf("\nsetMotionPageJointFlexibility CCW ID%i - ", AX12_IDS[i]);
+				dxl_printCommStatus(commStatus);
+				return -1;
+			}
+			commStatus = dxl_write_byte(AX12_IDS[i], DXL_CW_COMPLIANCE_SLOPE, complianceSlope);
+			if(commStatus != COMM_RXSUCCESS) {
+				// there has been an error, print and break
+				printf("\nsetMotionPageJointFlexibility CW ID%i - ", AX12_IDS[i]);
+				dxl_printCommStatus(commStatus);
+				return -1;
+			}
 		}
-		commStatus = dxl_write_byte(AX12_IDS[i], DXL_CW_COMPLIANCE_SLOPE, complianceSlope);
-		if(commStatus != COMM_RXSUCCESS) {
-			// there has been an error, print and break
-			printf("\nsetMotionPageJointFlexibility CW ID%i - ", AX12_IDS[i]);
-			dxl_printCommStatus(commStatus);
-			return -1;
-		}
+		// update values for next iteration
+		last_joint_flex[i] = CurrentMotion.JointFlex[i];
 	}
 	return 0;
 }

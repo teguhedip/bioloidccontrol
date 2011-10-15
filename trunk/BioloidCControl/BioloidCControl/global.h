@@ -44,7 +44,7 @@ extern "C" {
 // Number of motion pages in the motion file (and motion.h)
 #ifdef HUMANOID_TYPEA
 	#define NUM_AX12_SERVOS		18
-	#define	NUM_MOTION_PAGES	199 // should be 225 - memory issue
+	#define	NUM_MOTION_PAGES	225 
 #endif
 #ifdef HUMANOID_TYPEB
 	#define NUM_AX12_SERVOS		16
@@ -104,7 +104,7 @@ extern "C" {
 #define COMMAND_WALK_READY_MP			31
 #define COMMAND_SIT_MP					25
 #define COMMAND_STAND_MP				26
-#define COMMAND_BALANCE_MP				14
+#define COMMAND_BALANCE_MP				224
 #define COMMAND_FRONT_GET_UP_MP			27
 #define COMMAND_BACK_GET_UP_MP			28
 #define COMMAND_RESET_MP				26
