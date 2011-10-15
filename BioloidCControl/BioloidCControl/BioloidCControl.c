@@ -98,6 +98,13 @@ volatile int16 current_pose[NUM_AX12_SERVOS];
 volatile uint8 current_motion_page = 0;
 volatile uint8 next_motion_page = 0;			// next motion page if we got new command
 
+
+// variables to read far flash for motion page analysis
+uint32 far_address = 0x20000;		// assume this is the start of memory
+uint8  far_byte = 0;				// holds 1 byte
+uint8  far_line[16];				// holds one line of 16 bytes
+
+
 // the new implementation of AVR libc does not allow variables passed to _delay_ms
 static inline void delay_ms(uint16 count) {
 	while(count--) { 
@@ -231,3 +238,33 @@ int main(void)
     } // end of main command loop
 
 }
+
+// There is a bug in the GCC tool chain with AVR Studio 5 (gcc 4.5.1) that causes Flash memory beyond
+// 64KB not to be accessed correctly (compiler generates lpm instructions where elpm should be generated)
+// for details on this bug see http://www.avrfreaks.net/index.php?name=PNphpBB2&file=viewtopic&t=108702
+// The code below provides a fix
+
+ void __do_copy_data(void) __attribute__((__section__(".init4"), __naked__)); 
+  void __do_copy_data(void) { 
+    __asm__( 
+   "   ldi r17, hi8(__data_end)                                                 \n" 
+   "   ldi r26, lo8(__data_start)                                               \n" 
+   "   ldi r27, hi8(__data_start)                                               \n" 
+   "   ldi r30, lo8(__data_load_start)                                          \n" 
+   "   ldi r31, hi8(__data_load_start)                                          \n" 
+   "                                                                            \n" 
+   "                                                                            \n" 
+   "   ldi r16, hh8(__data_load_start)                                          \n" 
+   "   out %[_RAMPZ], r16														\n" 
+   "   rjmp  .L__do_copy_data_start                                             \n" 
+   " .L__do_copy_data_loop:                                                     \n" 
+   "   elpm  r0, Z+                                                             \n" 
+   "   st  X+, r0                                                               \n" 
+   " .L__do_copy_data_start:                                                    \n" 
+   "   cpi r26, lo8(__data_end)                                                 \n" 
+   "   cpc r27, r17                                                             \n" 
+   "   brne  .L__do_copy_data_loop                                              \n" 
+   : 
+   :  [_RAMPZ]    "I" (_SFR_IO_ADDR(RAMPZ)) 
+    ); 
+  } 
