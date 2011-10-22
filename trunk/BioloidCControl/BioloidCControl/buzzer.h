@@ -1,10 +1,13 @@
 /*
-  Buzzer.h - Functions for controlling the buzzer on the Robotis CM-510
-    These function use a timer1 PWM to generate the note frequencies and 
-	timer1 overflow interrupt to time the duration of the notes, so the 
-	buzzer can be playing a melody in the background while 	the rest of 
-	the code executes. 
-	Based on the Pololu library (see below)
+ * Buzzer.h - Functions for controlling the buzzer on the Robotis CM-510
+ *  These function use a timer1 PWM to generate the note frequencies and 
+ *	timer1 overflow interrupt to time the duration of the notes, so the 
+ *	buzzer can be playing a melody in the background while 	the rest of 
+ *	the code executes. 
+ *	Based on the Pololu library (see below)
+ * Version 0.4		30/09/2011
+ * Adapted by Peter Lanius
+ * Please send suggestions and bug fixes to PeterLanius@gmail.com
 */
 
 /*

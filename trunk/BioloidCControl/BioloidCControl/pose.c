@@ -4,7 +4,7 @@
  * 
  * Version 0.4		30/09/2011
  * Written by Peter Lanius
- * Please send suggestions and bug fixes to peter_lanius@yahoo.com.au
+ * Please send suggestions and bug fixes to PeterLanius@gmail.com
  */
 
 /*
@@ -84,8 +84,8 @@ void waitForPoseFinish()
 // We make the following assumptions:
 // AX-12 speed is 59rpm @ 12V which corresponds to 0.170s/60deg
 // The AX-12 manual states this as the 'no load speed' at 12V
-// We ignore the Moving Speed entry which states that 0x3FF = 114rpm
-// Instead we assume that Moving Speed 0x3FF = 59rpm
+// The Moving Speed control table entry states that 0x3FF = 114rpm
+// and according to Robotis this means 0x212 = 59rpm and anything greater 0x212 is also 59rpm
 void calculatePoseServoSpeeds(uint16 time)
 {
     int i;
@@ -108,9 +108,9 @@ void calculatePoseServoSpeeds(uint16 time)
 		}
 		
 		// now we can calculate the desired moving speed
-		// for 59pm the factor is 847.46 which we round to 847
+		// for 59pm the factor is 847.46 which we round to 848
 		// we need to use a temporary 32bit integer to prevent overflow
-		factor = (uint32) 847 * travel[i]; 
+		factor = (uint32) 848 * travel[i]; 
 		goal_speed[i] = (uint16) ( factor / time );
 		// if the desired speed exceeds the maximum, we need to adjust
 		if (goal_speed[i] > 1023) goal_speed[i] = 1023;
@@ -145,7 +145,7 @@ int moveToGoalPose(uint16 time, uint16 goal[], uint8 wait_flag)
 	// do the setup and calculate speeds
 	calculatePoseServoSpeeds(time);
 
-	// write out the goal positions for final frame via sync write
+	// write out the goal positions via sync write
 	commStatus = dxl_set_goal_speed(NUM_AX12_SERVOS, AX12_IDS, goal_pose, goal_speed);
 	// check for communication error or timeout
 	if(commStatus != COMM_RXSUCCESS) {
