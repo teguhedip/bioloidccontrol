@@ -3,12 +3,11 @@
  *	also provides the interpolation to smooth out movement 
  * 
  * Version 0.4		30/09/2011
+ * Written by Peter Lanius
+ * Please send suggestions and bug fixes to PeterLanius@gmail.com
  */
 
 /*
- * Written by Peter Lanius
- * Please send suggestions and bug fixes to peter_lanius@yahoo.com.au
- *
  * You may freely modify and share this code, as long as you keep this
  * notice intact. Licensed under the Creative Commons BY-SA 3.0 license:
  *

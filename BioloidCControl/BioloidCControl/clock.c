@@ -1,9 +1,9 @@
 /*
  * clock.c - millisecond and microsecond clock
  * 
- * Version 0.3		03/09/2011
+ * Version 0.4		30/09/2011
  * Written by Peter Lanius
- * Please send suggestions and bug fixes to peter_lanius@yahoo.com.au
+ * Please send suggestions and bug fixes to PeterLanius@gmail.com
  *
  */
 
