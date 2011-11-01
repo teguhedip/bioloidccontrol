@@ -6,7 +6,7 @@
 		GyroY = CM-510 Port4 = ADC4 = PORTF4
 		DMS   = CM-510 Port5 = ADC5 = PORTF5
 	Written by Peter Lanius
-	Version 0.4		30/09/2011 
+	Version 0.5		31/10/2011 
 	Based on the Pololu library (see below)
 */
 

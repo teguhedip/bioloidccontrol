@@ -2,7 +2,7 @@
  * global.h - Basic definitions for the Robotis Bioloid CM-510 controller. 
  *   contains hardware definitions and command list
  *   
- * Version 0.4		30/09/2011
+ * Version 0.5		31/10/2011
  * Written by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
 */
@@ -66,6 +66,8 @@ extern "C" {
 #define BATTERY_READ_INTERVAL	1000	// read battery once every second
 #define GYROX_SLIP_ERROR		170		// deviation from 0 interpreted as a slip (170 = 250deg/s rotation)
 #define LOW_VOLTAGE_CUTOFF		10500	// 10.5V is a very safe limit for a 11.7V LiPo
+#define SAFE_DISTANCE			50		// minimum distance from obstacles to stop avoiding (cm)
+#define MINIMUM_DISTANCE		20		// minimum distance from obstacles to start avoiding (cm)
 
 // Command List
 // To add commands:		1. Add it to the list below

@@ -9,7 +9,7 @@
  *   
  * Performs initializations and then runs main control loop
  *   
- * Version 0.4		30/09/2011 - finite state machine based control loop
+ * Version 0.5		31/10/2011 - finite state machine based control loop
  *
  * Written by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
@@ -94,7 +94,8 @@ volatile int16 adc_accelx = 0;			// accelerometer x value
 volatile int16 adc_accely = 0;			// accelerometer y value
 volatile uint16 adc_accelx_center = 0;	// accelerometer x center value
 volatile uint16 adc_accely_center = 0;	// accelerometer y center value
-volatile uint16 adc_ultras = 0;			// ultrasonic distance sensor value
+volatile uint16 adc_ultrasonic_distance = 0;	// ultrasonic distance sensor value
+volatile uint16 adc_dms_distance = 0;   // DMS sensor distance value
 
 // Global variables related to the finite state machine that governs execution
 volatile uint8 bioloid_command = 0;			// current command
@@ -122,7 +123,7 @@ static inline void delay_ms(uint16 count) {
 int main(void)
 {
 	// local variables
-	int	sensor_flag, command_flag, comm_status, sensor_process_flag;
+	int	sensor_flag, command_flag, comm_status, sensor_process_flag, obstacle_flag;
 	// TIMING: unsigned long timer1, timer2, timer3, timer4;
 	
 	// Initialization Routines
@@ -165,7 +166,8 @@ int main(void)
 	executeMotion(COMMAND_BALANCE_MP);
 	
 	// set the walk state
-	walkSetWalkState(0);
+	walk_setWalkState(0);
+	obstacle_flag = 0;
 
 	// initialize the ADC and take default readings
 	delay_ms(4000);			// wait 4s for gyros to stabilize
@@ -212,6 +214,15 @@ int main(void)
 			// new sensor data - process and update command flag if necessary
 			sensor_process_flag = adc_processSensorData();
 			if ( command_flag == 0 && sensor_process_flag == 1 ) {
+				command_flag = 1;
+			}
+		}
+		
+		// obstacle avoidance for walking
+		if ( walk_getWalkState() != 0 ) {
+			// currently very basic - turn left until path is clear
+			obstacle_flag = walk_avoidObstacle(obstacle_flag);
+			if ( command_flag == 0 && (obstacle_flag == 1 || obstacle_flag == -1) ) {
 				command_flag = 1;
 			}
 		}

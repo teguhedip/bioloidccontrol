@@ -28,6 +28,11 @@
 extern volatile uint8 bioloid_command;			// current command
 extern volatile uint8 last_bioloid_command;		// last command
 extern volatile bool  new_command;				// flag that we got a new command
+extern volatile uint8 next_motion_page;			// next motion page if we got new command
+
+// global variables for distance sensors
+extern volatile uint16 adc_ultrasonic_distance;	// ultrasonic distance sensor value
+extern volatile uint16 adc_dms_distance;	    // DMS sensor distance value
 
 // global variable that keeps the current motion page
 extern uint8 current_motion_page;
@@ -58,7 +63,7 @@ void walk_init()
 }
 
 // function to update the walk state
-void walkSetWalkState(int command)
+void walk_setWalkState(int command)
 {
 	// the walk state simply corresponds to the command
 	walk_state = command;
@@ -66,7 +71,7 @@ void walkSetWalkState(int command)
 
 // function to retrieve the walk state
 // Returns (int) walk state
-int walkGetWalkState()
+int walk_getWalkState()
 {
 	// return current walk state
 	return walk_state;
@@ -78,7 +83,7 @@ int walkGetWalkState()
 // All other transitions between walk commands have to go via their exit page
 // Returns:	(int)	shift flag 0 - nothing happened
 //							   1 - new motion page set
-int walkShift()
+int walk_shift()
 {
 	// first check that the current command is a walk command
 	if ( bioloid_command < COMMAND_WALK_FORWARD || bioloid_command > COMMAND_WALK_BWD_TURN_RIGHT )
@@ -198,5 +203,46 @@ int walkShift()
 	}		
 	
 	// in all other cases nothing happened
+	return 0;
+}
+
+// function to avoid obstacles by turning left until path is clear
+// Input:	obstacle flag from last execution
+// Returns:	(int) obstacle flag 0 - no obstacle
+//								1 - new obstacle, start avoiding
+//								2 - currently avoiding obstacle
+//							   -1 - finished avoiding
+int walk_avoidObstacle(int obstacle_flag)
+{
+	// first check if we are currently in obstacle avoidance mode
+	if ( obstacle_flag == 1 || obstacle_flag == 2 )
+	{
+		if ( adc_dms_distance > SAFE_DISTANCE && adc_ultrasonic_distance > SAFE_DISTANCE )
+		{
+			// have cleared the obstacle, return to walking forward
+			last_bioloid_command = bioloid_command;
+			bioloid_command = COMMAND_WALK_FORWARD;
+			return -1;
+		} else {
+			// still avoiding, return
+			return 2;
+		}
+	}
+	
+	// next check for a new obstacle
+	if ( obstacle_flag == 0 || obstacle_flag == -1 )
+	{
+		if ( adc_dms_distance < MINIMUM_DISTANCE || adc_ultrasonic_distance < MINIMUM_DISTANCE )
+		{
+			// have found an obstacle, start turning left
+			last_bioloid_command = bioloid_command;
+			bioloid_command = COMMAND_WALK_TURN_LEFT;
+			return 1;
+		} else {
+			// no obstacle, return
+			return 0;
+		}
+	}
+	// not needed, but avoids compiler warning :)
 	return 0;
 }

@@ -2,7 +2,7 @@
  * pose.c - functions for assuming poses based on motion pages  
  *	also provides the interpolation to smooth out movement 
  * 
- * Version 0.4		30/09/2011
+ * Version 0.5		31/10/2011
  * Written by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
  */
@@ -97,7 +97,7 @@ void calculatePoseServoSpeeds(uint16 time)
 	uint32 factor;
 
 	// read the current pose only if we are not walking (no time)
-	if( walkGetWalkState() == 0 ) {
+	if( walk_getWalkState() == 0 ) {
 		readCurrentPose();		// takes 6ms
 	}	
 	
@@ -127,7 +127,7 @@ void calculatePoseServoSpeeds(uint16 time)
 		}
 		
 		// if we are walking we simply set the current pose as the goal pose to save time
-		if( walkGetWalkState() != 0 ) {
+		if( walk_getWalkState() != 0 ) {
 			current_pose[i] = goal_pose[i];	
 		}		
 	
