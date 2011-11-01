@@ -2,7 +2,7 @@
  * pose.h - functions for assuming poses base on motion pages  
  *	also provides the interpolation to smooth out movement 
  * 
- * Version 0.4		30/09/2011
+ * Version 0.5		31/10/2011
  * Written by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
  */

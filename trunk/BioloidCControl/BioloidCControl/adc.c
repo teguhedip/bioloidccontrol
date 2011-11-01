@@ -6,7 +6,7 @@
  *		GyroY = CM-510 Port4 = ADC4 = PORTF4
  *		DMS   = CM-510 Port5 = ADC5 = PORTF5
  *
- * Version 0.4 - Created: 30/09/2011 
+ * Version 0.5 - Created: 31/10/2011 
  * Written by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
  * Based on the Pololu library (see below)
@@ -61,7 +61,8 @@ extern volatile int16 adc_accelx;			 // accelerometer x value
 extern volatile int16 adc_accely;			 // accelerometer y value
 extern volatile uint16 adc_accelx_center;	 // accelerometer x center value
 extern volatile uint16 adc_accely_center;	 // accelerometer y center value
-extern volatile uint16 adc_ultras;			 // ultrasonic distance sensor value
+extern volatile uint16 adc_ultrasonic_distance;	// ultrasonic distance sensor value
+extern volatile uint16 adc_dms_distance;   // DMS sensor distance value
 
 uint16 millivolt_calibration = 5000;	// contains default VCC in millivolts
 int16 fwd_bwd_balance = 0;				// gyro x deviation from center
@@ -110,7 +111,8 @@ int adc_processSensorData()
 	adc_accelx = adc_sensor_val[ADC_ACCELX-1] - adc_accelx_center;	// center value is ~2500mV, produces acceleration in mg
 	adc_accely = adc_sensor_val[ADC_ACCELY-1] - adc_accely_center;	// center value is ~2500mV, produces acceleration in mg
 	// calculate distance from Maxbotix EZ0 sensor (avoid floating point calculations for speed reasons)
-	adc_ultras = adc_sensor_val[ADC_ULTRASONIC-1] >> 2;	// gives approximate distance in cm (true factor is 0.259cm per mV)
+	adc_ultrasonic_distance = adc_sensor_val[ADC_ULTRASONIC-1] >> 2;	// gives approximate distance in cm (true factor is 0.259cm per mV)
+	adc_dms_distance = adc_convertDMStoCM(adc_sensor_val[ADC_DMS-1]);	// gives approximate distance in cm (no interpolation)
 	
 	// TEST: printf("\n%i, %i, %i, %i, %i, %i, %i", current_motion_page, current_step, fwd_bwd_balance, left_right_balance, adc_accelx, adc_accely, adc_ultras);
 	
@@ -216,7 +218,7 @@ int adc_readSensors()
 		{
 			if (adc_sensor_enable[ADC_DMS-1] == 1)
 			{
-				adc_sensor_val[ADC_DMS-1] = adc_convertDMStoCM(adc_read(ADC_DMS));
+				adc_sensor_val[ADC_DMS-1] = adc_read(ADC_DMS);
 			}
 			if (adc_sensor_enable[ADC_ULTRASONIC-1] == 1)
 			{

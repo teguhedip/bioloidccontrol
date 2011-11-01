@@ -2,7 +2,7 @@
  * motion.c - functions for executing motion pages  
  *	requires a motion.h file created by the translate_motion Perl script 
  * 
- * Version 0.4		30/09/2011
+ * Version 0.5		31/10/2011
  * Written by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
  */
@@ -359,7 +359,7 @@ void executeMotionSequence()
 	if ( motion_state == STEP_IN_MOTION )
 	{
 		// if walking we can't wait for motion to finish, go by step time instead
-		if( walkGetWalkState() != 0 ) {
+		if( walk_getWalkState() != 0 ) {
 			if ( (millis()-step_start_time) >= CurrentMotion.PlayTime[current_step-1] ) {
 				// step time is up, update state
 				motion_state = STEP_FINISHED;
@@ -394,7 +394,7 @@ void executeMotionSequence()
 	// Next we check for any movement related alarms - at this point the only way the
 	// motion state can be STEP_FINISHED is because it was changed above
 	// Given this takes 11ms, that's too long for walking (may have to revisit)
-	if ( motion_state == STEP_FINISHED && walkGetWalkState() == 0 )
+	if ( motion_state == STEP_FINISHED && walk_getWalkState() == 0 )
 	{
 		// check that executing the last step didn't cause any alarms (takes 5ms)
 		for (uint8 i=0; i<NUM_AX12_SERVOS; i++) {
@@ -460,7 +460,7 @@ void executeMotionSequence()
 		// Option 2 - respond to change in walk command (seamless transitions only)
 		else if ( new_command == TRUE ) 
 		{
-			if ( walkShift() == 1 ) {
+			if ( walk_shift() == 1 ) {
 				// walkShift already updates the current motion page
 				new_command = FALSE;
 			} else {
@@ -564,7 +564,7 @@ void executeMotionSequence()
 				walk_init();
 		} 
 		// special case of shifting between walk commands - non-seamless transitions
-		else if ( walkGetWalkState() > 0 && (bioloid_command >= COMMAND_WALK_FORWARD && bioloid_command < COMMAND_WALK_READY) )
+		else if ( walk_getWalkState() > 0 && (bioloid_command >= COMMAND_WALK_FORWARD && bioloid_command < COMMAND_WALK_READY) )
 		{
 				// calculate the page number relative to start of previous command
 				left_right_step = current_motion_page - COMMAND_WALK_READY_MP;
@@ -590,10 +590,10 @@ void executeMotionSequence()
 			next_motion_page = 0;
 			// also need to set walk state if it's a walk command
 			if ( bioloid_command >= COMMAND_WALK_FORWARD && bioloid_command < COMMAND_WALK_READY ) {
-				walkSetWalkState(bioloid_command);
+				walk_setWalkState(bioloid_command);
 			} else {
 				// not a walk command, reset walk state
-				walkSetWalkState(0);
+				walk_setWalkState(0);
 			}
 			
 			if ( setMotionPageJointFlexibility() == 0 ) {
