@@ -1,5 +1,6 @@
 ﻿/*
  * global.h - Basic definitions for the Robotis Bioloid CM-510 controller. 
+ *   contains hardware definitions and command list
  *   
  * Version 0.4		30/09/2011
  * Written by Peter Lanius
@@ -60,7 +61,8 @@ extern "C" {
 #define MAX_MOTION_STEPS	7
 
 // Top level ADC/Sensor related parameters - adjust as needed
-#define SENSOR_READ_INTERVAL	100		// read gyro/DMS every 100ms 
+#define GYRO_READ_INTERVAL		16		// read gyro every 16ms 
+#define DMS_READ_INTERVAL		500		// read DMS every 500ms
 #define BATTERY_READ_INTERVAL	1000	// read battery once every second
 #define GYROX_SLIP_ERROR		170		// deviation from 0 interpreted as a slip (170 = 250deg/s rotation)
 #define LOW_VOLTAGE_CUTOFF		10500	// 10.5V is a very safe limit for a 11.7V LiPo
@@ -143,9 +145,12 @@ typedef uint8_t		bool;
 #define ADC_PORT_6		6	// free
 // ADC Channel settings for CM-510 (default configuration)
 #define ADC_BATTERY		0
+#define ADC_ACCELY		1
+#define ADC_ACCELX		2
 #define ADC_GYROX		3
 #define ADC_GYROY		4
 #define ADC_DMS			5
+#define ADC_ULTRASONIC	6
 
 // PORTA
 //    Set pin output low to set external header high (inverted via transistor)

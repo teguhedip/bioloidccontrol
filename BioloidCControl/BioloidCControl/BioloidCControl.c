@@ -7,6 +7,8 @@
  * Supports all motions, including walking, gyro, DMS, buzzer, LEDs, buttons and
  * serial connection via cable and ZIG2Serial.
  *   
+ * Performs initializations and then runs main control loop
+ *   
  * Version 0.4		30/09/2011 - finite state machine based control loop
  *
  * Written by Peter Lanius
@@ -80,13 +82,19 @@ const char *buzzerSequence;
 //		GyroX = CM-510 Port3 = ADC3 = PORTF3
 //		GyroY = CM-510 Port4 = ADC4 = PORTF4
 //		DMS   = CM-510 Port5 = ADC5 = PORTF5
-volatile uint16 adc_sensor_enable[ADC_CHANNELS] = {0, 0, 1, 1, 1, 0}; 
-volatile uint16 adc_sensor_val[ADC_CHANNELS] = {0, 0, 0, 0, 0, 0}; 	// array of sensor values
+//		AccelY= CM-510 Port1 = ADC1 = PORTF0
+//		AccelX= CM-510 Port2 = ADC2 = PORTF1
+//		Ultra = CM-510 Port6 = ADC6 = PORTF5
+volatile uint8 adc_sensor_enable[ADC_CHANNELS] = {1, 1, 1, 1, 1, 1}; 
+volatile int16 adc_sensor_val[ADC_CHANNELS] = {0, 0, 0, 0, 0, 0}; 	// array of sensor values
 volatile uint16 adc_battery_val = 0;	// battery voltage in millivolts
-volatile uint16 adc_gyrox_center = 0;	// gyro x center values
-volatile uint16 adc_gyroy_center = 0;	// gyro y center values
-int16 fwd_bwd_balance = 0;				// gyro x deviation from center
-int16 left_right_balance = 0;			// gyro y deviation from center
+volatile uint16 adc_gyrox_center = 0;	// gyro x center value
+volatile uint16 adc_gyroy_center = 0;	// gyro y center value
+volatile int16 adc_accelx = 0;			// accelerometer x value
+volatile int16 adc_accely = 0;			// accelerometer y value
+volatile uint16 adc_accelx_center = 0;	// accelerometer x center value
+volatile uint16 adc_accely_center = 0;	// accelerometer y center value
+volatile uint16 adc_ultras = 0;			// ultrasonic distance sensor value
 
 // Global variables related to the finite state machine that governs execution
 volatile uint8 bioloid_command = 0;			// current command
@@ -94,11 +102,13 @@ volatile uint8 last_bioloid_command = 0;	// last command
 volatile bool  new_command = FALSE;			// flag that we got a new command
 volatile uint8 flag_receive_ready = 0;		// received complete command flag
 
-// keep the current pose as global variable
+// keep the current pose and joint offsets as global variables
 volatile int16 current_pose[NUM_AX12_SERVOS];
+volatile int16 joint_offset[NUM_AX12_SERVOS];
 // and also the current and next motion pages
 volatile uint8 current_motion_page = 0;
 volatile uint8 next_motion_page = 0;		// next motion page if we got new command
+volatile uint8 current_step = 0;			// number of the current motion page step
 
 
 // the new implementation of AVR libc does not allow variables passed to _delay_ms
@@ -112,7 +122,8 @@ static inline void delay_ms(uint16 count) {
 int main(void)
 {
 	// local variables
-	int	sensor_flag, command_flag, comm_status;
+	int	sensor_flag, command_flag, comm_status, sensor_process_flag;
+	// TIMING: unsigned long timer1, timer2, timer3, timer4;
 	
 	// Initialization Routines
 	led_init();				// switches all 6 LEDs on
@@ -128,7 +139,7 @@ int main(void)
 	// enable interrupts
 	sei();
 	// print welcome message
-	printf("\n\nBioloid C Control V0.4\n");
+	printf("\nBioloid C Control V0.4\n");
 	// reset the start button variable, something triggers the interrupt on start-up
 	start_button_pressed = FALSE;
 	
@@ -157,20 +168,24 @@ int main(void)
 	walkSetWalkState(0);
 
 	// initialize the ADC and take default readings
-	delay_ms(2000);			// wait 2s for gyros to stabilize
+	delay_ms(4000);			// wait 4s for gyros to stabilize
 	adc_init();
 
 	// print out default sensor values
-	printf("Battery, Gyro X, Y Center = %i %i %i \n", adc_battery_val, adc_gyrox_center, adc_gyroy_center);
+	printf("Battery, Gyro X, Y Accel X, Y Center = %i %i %i %i %i \n", adc_battery_val, adc_gyrox_center, adc_gyroy_center, adc_accelx_center, adc_accely_center);
 	
 	// write out the command prompt
 	printf(	"\nReady for command.\n> ");
 
-	// main command loop (takes 12ms when idle)
+	// TIMING: timer4 = micros();
+
+	// main command loop (takes 28us when idle)
     while(1)
     {
 		// Check if we received a new command
-		command_flag = serialReceiveCommand();
+		command_flag = serialReceiveCommand();		// takes 4ms if new command (largely because of printf)
+
+		// TIMING: timer1 = micros() - timer4;
 		
 		// check if start button has been pressed and we need to do emergency stop
 		if ( start_button_pressed && bioloid_command != COMMAND_STOP )
@@ -192,37 +207,11 @@ int main(void)
 		}
 		
 		// Check if we need to read the sensors 
-		sensor_flag = adc_readSensors();
+		sensor_flag = adc_readSensors();      // takes 0.6ms for gyro/accel and 0.9ms including DMS/ultrasonic (156us per channel)
 		if ( sensor_flag == 1 ) {
-			// TEST: printf("\nADC Gyro X = %i, Y= %i", adc_sensor_val[ADC_GYROX-1], adc_sensor_val[ADC_GYROY-1]);
-			
-			// calculate deviations from center values
-			fwd_bwd_balance = (int16) adc_sensor_val[ADC_GYROX-1] - (int16) adc_gyrox_center;
-			left_right_balance = (int16) adc_sensor_val[ADC_GYROY-1] - (int16) adc_gyroy_center;
-			// TEST: printf("\n%i, %i, %i", current_motion_page, fwd_bwd_balance, left_right_balance);
-			
-			// did read sensors - check if robot slipped
-			if( fwd_bwd_balance > GYROX_SLIP_ERROR ) {
-				// backward slip
-				last_bioloid_command = bioloid_command;
-				bioloid_command = COMMAND_BACK_GET_UP;
-				next_motion_page = COMMAND_BACK_GET_UP_MP;
-				command_flag = 1;
-			}
-			else if( fwd_bwd_balance > GYROX_SLIP_ERROR ) {
-				// forward slip
-				last_bioloid_command = bioloid_command;
-				bioloid_command = COMMAND_FRONT_GET_UP;
-				next_motion_page = COMMAND_FRONT_GET_UP_MP;
-				command_flag = 1;
-			}
-			// check battery voltage still within limits
-			if ( adc_battery_val < LOW_VOLTAGE_CUTOFF ) {
-				// too low - play alarm and stop 
-				buzzer_playFromProgramSpace(melody5);
-				last_bioloid_command = bioloid_command;
-				bioloid_command = COMMAND_SIT;
-				next_motion_page = COMMAND_SIT_MP;
+			// new sensor data - process and update command flag if necessary
+			sensor_process_flag = adc_processSensorData();
+			if ( command_flag == 0 && sensor_process_flag == 1 ) {
 				command_flag = 1;
 			}
 		}
@@ -234,9 +223,15 @@ int main(void)
 		}
 		// TEST: printf("\n Command %i, New %i, MP %i, Next MP %i ", bioloid_command, new_command, current_motion_page, next_motion_page);
 		
-		// execute motions
-		executeMotionSequence();
+		// TIMING: timer2 = micros() - timer4 - timer1;
 		
+		// execute motion steps
+		executeMotionSequence();	// takes 2.1ms when executing a step during walking or 3.3ms if unpacking a new motion page
+		
+		// TIMING: timer3 = micros() - timer4 - timer1 - timer2;
+		// TIMING: printf("%lu, %lu, %lu, %i\n", timer1, timer2, timer3, sensor_flag);
+		// TIMING: timer4 = micros();
+
     } // end of main command loop
 
 }

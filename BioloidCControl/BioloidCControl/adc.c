@@ -35,21 +35,42 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <avr/io.h>
+#include <stdio.h>
 #include "global.h"
 #include "adc.h"
 #include "clock.h"
+#include "buzzer.h"
 
-#define DMSTablePoints	11	// number of entries in DMS conversion table 
+// Global variables related to the finite state machine that governs execution
+extern volatile uint8 bioloid_command;			// current command
+extern volatile uint8 last_bioloid_command;		// last command
+// and also the current and next motion pages
+extern volatile uint8 current_motion_page;
+extern volatile uint8 next_motion_page;	
+extern uint8 current_step;						// number of the current motion page step
+// joint offset values
+extern volatile int16 joint_offset[NUM_AX12_SERVOS];
 
 // global variables used for the ADC values
-extern volatile uint16 adc_sensor_enable[ADC_CHANNELS];  // enabled sensors
-extern volatile uint16 adc_sensor_val[ADC_CHANNELS]; 	 // array of sensor values
+extern volatile uint8 adc_sensor_enable[ADC_CHANNELS];  // enabled sensors
+extern volatile int16 adc_sensor_val[ADC_CHANNELS]; 	 // array of sensor values
 extern volatile uint16 adc_battery_val;		 // battery voltage in millivolts
 extern volatile uint16 adc_gyrox_center;	 // gyro x center value
 extern volatile uint16 adc_gyroy_center;	 // gyro x center value
+extern volatile int16 adc_accelx;			 // accelerometer x value
+extern volatile int16 adc_accely;			 // accelerometer y value
+extern volatile uint16 adc_accelx_center;	 // accelerometer x center value
+extern volatile uint16 adc_accely_center;	 // accelerometer y center value
+extern volatile uint16 adc_ultras;			 // ultrasonic distance sensor value
 
 uint16 millivolt_calibration = 5000;	// contains default VCC in millivolts
+int16 fwd_bwd_balance = 0;				// gyro x deviation from center
+int16 left_right_balance = 0;			// gyro y deviation from center
 
+// buzzer alarm melody
+extern const char melody5[];
+
+#define DMSTablePoints	11	// number of entries in DMS conversion table 
 // Tables to convert DMS values to distance in cm
 // Values are from actual measurements, not the diagram in the e-manual
 const uint16 DMSTableValues[DMSTablePoints]=
@@ -58,9 +79,101 @@ const uint16 DMSTableCM[DMSTablePoints]=
 {80, 70, 60, 50, 40, 30, 25, 20, 15, 10, 5};
 
 // internal timing related variables that control when the sensors are read
-unsigned long last_sensor_read = 0;
+unsigned long last_gyro_read = 0;
+unsigned long last_dms_read = 0;
 unsigned long last_battery_read = 0;
 
+
+// function to process the sensor data when new data become available
+// detects slips (robot has fallen over forward/backward)
+// and also low battery alarms at this stage
+// Returns:  int flag = 0 no new command
+//           int flag = 1 new command
+int adc_processSensorData()
+{
+	int16 fb_joint_offset1, fb_joint_offset2, rl_joint_offset0, rl_joint_offset1;
+
+	// check battery voltage still within limits
+	if ( adc_battery_val < LOW_VOLTAGE_CUTOFF ) {
+		// too low - play alarm and stop 
+		buzzer_playFromProgramSpace(melody5);
+		last_bioloid_command = bioloid_command;
+		bioloid_command = COMMAND_SIT;
+		next_motion_page = COMMAND_SIT_MP;
+		return 1;
+	}
+	
+	// calculate gyro deviations from center values
+	fwd_bwd_balance = adc_sensor_val[ADC_GYROX-1] - (int16) adc_gyrox_center;
+	left_right_balance = adc_sensor_val[ADC_GYROY-1] - (int16) adc_gyroy_center;
+	// calculate accelerations as per ADXL203 datasheet
+	adc_accelx = adc_sensor_val[ADC_ACCELX-1] - adc_accelx_center;	// center value is ~2500mV, produces acceleration in mg
+	adc_accely = adc_sensor_val[ADC_ACCELY-1] - adc_accely_center;	// center value is ~2500mV, produces acceleration in mg
+	// calculate distance from Maxbotix EZ0 sensor (avoid floating point calculations for speed reasons)
+	adc_ultras = adc_sensor_val[ADC_ULTRASONIC-1] >> 2;	// gives approximate distance in cm (true factor is 0.259cm per mV)
+	
+	// TEST: printf("\n%i, %i, %i, %i, %i, %i, %i", current_motion_page, current_step, fwd_bwd_balance, left_right_balance, adc_accelx, adc_accely, adc_ultras);
+	
+	// did read sensors - check if robot slipped
+	if( fwd_bwd_balance > GYROX_SLIP_ERROR ) {
+		// backward slip
+		last_bioloid_command = bioloid_command;
+		bioloid_command = COMMAND_BACK_GET_UP;
+		next_motion_page = COMMAND_BACK_GET_UP_MP;
+		return 1;
+	}
+	else if( fwd_bwd_balance < -GYROX_SLIP_ERROR ) {
+		// forward slip
+		last_bioloid_command = bioloid_command;
+		bioloid_command = COMMAND_FRONT_GET_UP;
+		next_motion_page = COMMAND_FRONT_GET_UP_MP;
+		return 1;
+	}
+	
+	// calculate joint offset values as per Robotis Task files
+	fb_joint_offset1 = (fwd_bwd_balance<<2) / 54;		// knee servo adjustment
+	fb_joint_offset2 = fb_joint_offset1 * 3;			// ankle servo uses 3x as much offset
+	rl_joint_offset1 = (left_right_balance<<2) / 40;	// hip servo adjustment
+	rl_joint_offset0 = rl_joint_offset1 * 2;			// ankle servo uses 2x as much offset
+	
+	// TEST: printf("\nOffsets FB = %i, %i, RL= %i, %i", fb_joint_offset1, fb_joint_offset2, rl_joint_offset0, rl_joint_offset1);
+	
+	// just in case reset all offset values
+	for (uint8 i=0; i<NUM_AX12_SERVOS; i++) {
+		joint_offset[i] = 0;
+	}
+	// and apply to servos - this code is dependent on the hardware configuration
+#ifdef HUMANOID_TYPEA	// Type A - all 18 servos are present and numbers match
+	joint_offset[13-1] = fb_joint_offset1;
+	joint_offset[15-1] = fb_joint_offset2;
+	joint_offset[14-1] = -fb_joint_offset1;
+	joint_offset[16-1] = -fb_joint_offset2;
+	joint_offset[9-1]  = rl_joint_offset1;
+	joint_offset[10-1] = rl_joint_offset1;
+	joint_offset[17-1] = -rl_joint_offset0;
+	joint_offset[18-1] = -rl_joint_offset0;
+#endif
+#ifdef HUMANOID_TYPEB	// Type B - 16 servos and 9 and 10 are missing
+	joint_offset[13-3] = fb_joint_offset1;
+	joint_offset[15-3] = fb_joint_offset2;
+	joint_offset[14-3] = -fb_joint_offset1;
+	joint_offset[16-3] = -fb_joint_offset2;
+	joint_offset[17-3] = -rl_joint_offset0;
+	joint_offset[18-3] = -rl_joint_offset0;
+#endif
+#ifdef HUMANOID_TYPEC	// Type C - 16 servos and 7 and 8 are missing
+	joint_offset[13-3] = fb_joint_offset1;
+	joint_offset[15-3] = fb_joint_offset2;
+	joint_offset[14-3] = -fb_joint_offset1;
+	joint_offset[16-3] = -fb_joint_offset2;
+	joint_offset[9-3]  = rl_joint_offset1;
+	joint_offset[10-3] = rl_joint_offset1;
+	joint_offset[17-3] = -rl_joint_offset0;
+	joint_offset[18-3] = -rl_joint_offset0;
+#endif
+
+	return 0;
+}
 
 // function that reads all the sensors from the main loop
 // SENSOR_READ_INTERVAL in global.h determines how often the sensors are read
@@ -78,7 +191,7 @@ int adc_readSensors()
 	}
 
 	// check if we are overdue for reading the sensors
-	if( (millis() - last_sensor_read) >= SENSOR_READ_INTERVAL ) 
+	if( (millis() - last_gyro_read) >= GYRO_READ_INTERVAL ) 
 	{
 		// read each sensor in sequence
 		// single conversion time is around 120us
@@ -90,12 +203,29 @@ int adc_readSensors()
 		{
 			adc_sensor_val[ADC_GYROY-1] = adc_read(ADC_GYROY);
 		}
-		if (adc_sensor_enable[ADC_DMS-1] == 1)
+		if (adc_sensor_enable[ADC_ACCELX-1] == 1)
 		{
-			adc_sensor_val[ADC_DMS-1] = adc_convertDMStoCM(adc_read(ADC_DMS));
+			adc_sensor_val[ADC_ACCELX-1] = adc_readMillivolts(ADC_ACCELX);	
 		}
+		if (adc_sensor_enable[ADC_ACCELY-1] == 1)
+		{
+			adc_sensor_val[ADC_ACCELY-1] = adc_readMillivolts(ADC_ACCELY);
+		}
+		// only read distance sensors if they are due
+		if( (millis() - last_dms_read) >= DMS_READ_INTERVAL )
+		{
+			if (adc_sensor_enable[ADC_DMS-1] == 1)
+			{
+				adc_sensor_val[ADC_DMS-1] = adc_convertDMStoCM(adc_read(ADC_DMS));
+			}
+			if (adc_sensor_enable[ADC_ULTRASONIC-1] == 1)
+			{
+				adc_sensor_val[ADC_ULTRASONIC-1] = adc_readMillivolts(ADC_ULTRASONIC);  
+			}
+			last_dms_read = millis();
+		}		
 		// reset the timing variable
-		last_sensor_read = millis();
+		last_gyro_read = millis();
 		return 1;
 	}
 	
@@ -119,28 +249,41 @@ void adc_init()
 	// and set the timing variables
 	last_battery_read = millis();
 
-	// finally we need to find initial gyro values
+	// finally we need to find initial gyro and accelerometer center positions
 	adc_gyrox_center = 0;
 	adc_gyroy_center = 0;
-	// we take 10 samples every 25ms for 500ms
+	adc_accelx_center = 0;
+	adc_accely_center = 0;
+	// we take 12 samples every 32ms for 500ms
 	// also check each sensor is enabled
-	for (uint8 i=0; i<20; i++)
+	for (uint8 i=0; i<16; i++)
 	{
 		if (adc_sensor_enable[ADC_GYROX-1] == 1)
 		{
-			adc_gyrox_center += adc_readAverage(ADC_GYROX,10);
+			adc_gyrox_center += adc_readAverage(ADC_GYROX,12);
 		}
 		if (adc_sensor_enable[ADC_GYROY-1] == 1)
 		{
-			adc_gyroy_center += adc_readAverage(ADC_GYROY,10);
+			adc_gyroy_center += adc_readAverage(ADC_GYROY,12);
 		}
-		_delay_ms(25);
+		if (adc_sensor_enable[ADC_ACCELX-1] == 1)
+		{
+			adc_accelx_center += adc_readAverageMillivolts(ADC_ACCELX,12);
+		}
+		if (adc_sensor_enable[ADC_ACCELY-1] == 1)
+		{
+			adc_accely_center += adc_readAverageMillivolts(ADC_ACCELY,12);
+		}
+		_delay_ms(32);
 	}
-	adc_gyrox_center = adc_gyrox_center / 20;
-	adc_gyroy_center = adc_gyroy_center / 20;
+	// and calculate averages
+	adc_gyrox_center  = adc_gyrox_center / 16;
+	adc_gyroy_center  = adc_gyroy_center / 16;
+	adc_accelx_center = adc_accelx_center / 16;
+	adc_accely_center = adc_accely_center / 16;
 	
 	// and set the timing variables
-	last_sensor_read = millis();
+	last_gyro_read = millis();
 }
 
 // set the ADC to run in either 8-bit mode (MODE_8_BIT) or 
@@ -167,9 +310,7 @@ uint16 adc_getConversionResult()
 	if (adc_getMode())		// if left-adjusted (i.e. 8-bit mode)
 	{
 		return ADCH;		// 8-bit result
-	}
-	else
-	{
+	} else {
 		return ADC;			// 10-bit result
 	}
 }
@@ -180,9 +321,7 @@ uint16 adc_conversionResultMillivolts()
 	if (adc_getMode())		 // if left-adjusted (i.e. 8-bit mode)
 	{
 		return adc_toMillivolts(ADCH);
-	}
-	else
-	{
+	} else {
 		return adc_toMillivolts(ADC);
 	}
 }

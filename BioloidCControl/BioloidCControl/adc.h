@@ -40,6 +40,13 @@
 // initialization routine
 void adc_init(void);
 
+// function to process the sensor data when new data become available
+// detects slips (robot has fallen over forward/backward)
+// and also low battery alarms at this stage
+// Returns:  int flag = 0 no new command
+//           int flag = 1 new command
+int adc_processSensorData();
+
 // function that reads all the sensors from the main loop
 // SENSOR_READ_INTERVAL in global.h determines how often the sensors are read
 // BATTERY_READ_INTERVAL in global.h determines how often the battery voltage is read
