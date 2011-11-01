@@ -41,7 +41,6 @@
 // and create the variables that guide these functions
 uint8 motion_state = 7;					// motion state as per above definitions
 unsigned long pause_start_time = 0;		// millis() at start of pause time
-uint8 current_step = 0;					// number of the current motion page step
 uint8 repeat_counter = 0;				// number of repeats of page already performed
 uint8 exit_flag = 0;					// flag indicating we are on an exit page
 uint8 last_joint_flex[NUM_AX12_SERVOS];		// last set of joint flex values
@@ -59,6 +58,7 @@ extern const uint8 AX12Servos[MAX_AX12_SERVOS];
 // global variables that keep the current and next motion page
 extern volatile uint8 current_motion_page;
 extern volatile uint8 next_motion_page;			// next motion page if we got new command
+extern uint8 current_step;						// number of the current motion page step
 
 // should keep the current pose in a global array
 extern int16 current_pose[NUM_AX12_SERVOS];
