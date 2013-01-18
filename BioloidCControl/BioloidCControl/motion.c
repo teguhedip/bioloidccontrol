@@ -408,7 +408,7 @@ void executeMotionSequence()
 				return;
 			}
 		}	
-		// all ok, read back current pose (takes 6ms)
+		// no alarm has occurred, read back current pose (takes 6ms)
 		readCurrentPose();	
 	}
 	

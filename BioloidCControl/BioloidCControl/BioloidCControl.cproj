@@ -2,48 +2,59 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectVersion>5.0</ProjectVersion>
+    <ProjectVersion>6.0</ProjectVersion>
     <ProjectGuid>{040c32d4-d552-4a38-8fa0-3f88cdea57a1}</ProjectGuid>
     <avrdevice>ATmega2561</avrdevice>
     <avrdeviceseries>none</avrdeviceseries>
     <OutputType>Executable</OutputType>
     <Language>C</Language>
-    <OutputFile>$(MSBuildProjectName).elf</OutputFile>
     <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
-    <UseGlobalToolchain>True</UseGlobalToolchain>
-    <ToolchainDirPath>
-    </ToolchainDirPath>
-    <MakeDirPath>
-    </MakeDirPath>
-    <GlobalToolchainPath>C:\Program Files (x86)\Atmel\AVR Studio 5.0\AVR ToolChain\bin</GlobalToolchainPath>
     <AvrGccProjectExtensions>
     </AvrGccProjectExtensions>
     <AssemblyName>BioloidCControl</AssemblyName>
     <Name>BioloidCControl</Name>
     <RootNamespace>BioloidCControl</RootNamespace>
+    <ToolchainName>com.Atmel.AVRGCC8</ToolchainName>
+    <ToolchainFlavour>Native</ToolchainFlavour>
+    <avrtool />
+    <KeepTimersRunning>true</KeepTimersRunning>
+    <OverrideVtor>false</OverrideVtor>
+    <OverrideVtorValue />
+    <eraseonlaunchrule>0</eraseonlaunchrule>
+    <AsfVersion>3.5.1</AsfVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputFileName>BioloidCControl</OutputFileName>
+    <OutputFileExtension>.elf</OutputFileExtension>
     <ToolchainSettings>
-      <AvrGcc>
-        <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
-        <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
-        <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
-        <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
-        <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
-        <avrgcc.compiler.optimization.DebugLevel>None</avrgcc.compiler.optimization.DebugLevel>
-        <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
-      </AvrGcc>
+      <AvrGcc xmlns="">
+  <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+  <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+  <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+  <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
+  <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
+  <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
+  <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
+  <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
+  <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+  <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
+  <avrgcc.linker.libraries.Libraries>
+    <ListValues>
+      <Value>m</Value>
+    </ListValues>
+  </avrgcc.linker.libraries.Libraries>
+</AvrGcc>
     </ToolchainSettings>
-    <MemorySettings>
-    </MemorySettings>
-    <GenerateHexFile>True</GenerateHexFile>
-    <GenerateMapFile>True</GenerateMapFile>
-    <GenerateListFile>True</GenerateListFile>
-    <GenerateEepFile>True</GenerateEepFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputFileName>BioloidCControl</OutputFileName>
+    <OutputFileExtension>.elf</OutputFileExtension>
     <ToolchainSettings>
-      <AvrGcc>
+      <AvrGcc xmlns="">
+  <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+  <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+  <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+  <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
   <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
   <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
   <avrgcc.compiler.symbols.DefSymbols>
@@ -55,26 +66,23 @@
   <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
   <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
   <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
-  <avrgcc.assembler.debugging.DebugLevel>Default (-g2)</avrgcc.assembler.debugging.DebugLevel>
+  <avrgcc.linker.libraries.Libraries>
+    <ListValues>
+      <Value>m</Value>
+    </ListValues>
+  </avrgcc.linker.libraries.Libraries>
+  <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
 </AvrGcc>
     </ToolchainSettings>
-    <MemorySettings>
-      <MemorySegments>
-        <InitialStack IsEnabled="0">
-          <Address>0xfe00</Address>
-        </InitialStack>
-      </MemorySegments>
-    </MemorySettings>
-    <GenerateHexFile>True</GenerateHexFile>
-    <GenerateMapFile>True</GenerateMapFile>
-    <GenerateListFile>True</GenerateListFile>
-    <GenerateEepFile>True</GenerateEepFile>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="adc.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="adc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="balance.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="BioloidCControl.c">
@@ -128,6 +136,9 @@
     <Compile Include="motion_f.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="pid.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="pose.c">
       <SubType>compile</SubType>
     </Compile>
@@ -146,6 +157,14 @@
     <Compile Include="walk.h">
       <SubType>compile</SubType>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="balance.c">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="pid.c">
+      <SubType>compile</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\AvrGCC.targets" />
 </Project>

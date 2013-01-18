@@ -235,7 +235,7 @@ for ($i = 1; $i <= 255; $i++) {
 		$total_pages += 1;
 		push( @motion_pages, $i );
 		# Output the motion page to the header file
-		print $out "struct // $page_name \n";
+		print $out "const struct // $page_name \n";
 		print $out "{ \n";
 		print $out "   const uint8 JointFlexibility[$active_servos]; \n";
 		print $out "   const uint8 NextPage; \n"; 
