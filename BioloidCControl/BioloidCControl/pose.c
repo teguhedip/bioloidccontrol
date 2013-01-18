@@ -106,7 +106,7 @@ void calculatePoseServoSpeeds(uint16 time)
 	for (i=0; i<NUM_AX12_SERVOS; i++)
 	{
 		// TEST: 
-		printf("\nDXL%i Current, Goal, Travel, Speed:", i+1);
+		// printf("\nDXL%i Current, Goal, Travel, Speed:", i+1);
 		
 		// process the joint offset values bearing in mind the different variable types
 		temp_goal = (int16) goal_pose[i] + joint_offset[i];
@@ -143,7 +143,7 @@ void calculatePoseServoSpeeds(uint16 time)
 		if (goal_speed[i] < 26) goal_speed[i] = 26;
 		
 		// TEST: 
-		printf(" %u, %u, %u, %u", current_pose[i], goal_pose[i], travel[i], goal_speed[i]);
+		// printf(" %u, %u, %u, %u", current_pose[i], goal_pose[i], travel[i], goal_speed[i]);
 	}
 	
 }

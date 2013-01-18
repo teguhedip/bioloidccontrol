@@ -2,7 +2,7 @@
  * balance.h - functions for static balancing of the robot  
  *  uses the PID controller and Kalman filter if accelerometer is installed
  * 
- * Version 0.6		30/11/2011
+ * Version 0.6		18/01/2013
  * Written by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
  */

@@ -3,7 +3,7 @@
  *    on-the-fly tuning changes and derivative kick avoidance
  *
  * Written by Peter Lanius
- * Version 0.6		30/11/2011 
+ * Version 0.6		18/01/2013 
  * Based on the Arduino PID library (see below)
  */ 
 

@@ -9,7 +9,7 @@
  *   
  * Performs initializations and then runs main control loop
  *   
- * Version 0.5		31/10/2011 - finite state machine based control loop
+ * Version 0.6		18/01/2013 - static balancing and bug fixes
  *
  * Written by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
