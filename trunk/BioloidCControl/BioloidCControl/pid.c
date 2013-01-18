@@ -3,7 +3,7 @@
  *    on-the-fly tuning changes and derivative kick avoidance
  *
  * Written by Peter Lanius
- * Version 0.6		30/11/2011 
+ * Version 0.6		18/01/2013 
  * Based on the Arduino PID library (see below)
  */ 
 
@@ -116,9 +116,10 @@ int	pid_compute()
  
 			// Compute PID Output
 			output = kp * error + integral_term[i] - kd * dInput;
+			
 			// TEST:
-			printf("\nCh: %i, PID input=%i, last=%i, output=%i, ", i, (int16)pid_input[i], (int16)last_input[i], (int16)output);
-			printf(" Err=%i, dI=%i, Int=%i", (int16)error, (int16)dInput, (int16)integral_term[i]);
+			// printf("\nCh: %i, PID input=%i, last=%i, output=%i, ", i, (int16)pid_input[i], (int16)last_input[i], (int16)output);
+			// printf(" Err=%i, dI=%i, Int=%i", (int16)error, (int16)dInput, (int16)integral_term[i]);
 
 			// apply output limits
 			if (output > outMax) { 

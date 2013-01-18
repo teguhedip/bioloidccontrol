@@ -4,7 +4,7 @@
  * Can either use serial cable or Zig2Serial via Zig-110
  *
  * Based on the embedded C library provided by Robotis  
- * Version 0.5		31/10/2011
+ * Version 0.6	18/01/2013
  * Modified by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
  * 

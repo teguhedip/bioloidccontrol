@@ -2,7 +2,7 @@
  * motion.c - functions for executing motion pages  
  *	requires a motion.h file created by the translate_motion Perl script 
  * 
- * Version 0.5		31/10/2011
+ * Version 0.6		18/01/2013
  * Written by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
  */
