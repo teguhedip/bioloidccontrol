@@ -16,7 +16,7 @@
 // Array showing which Dynamixel servos are enabled in motion file 
 const uint8 AX12_ENABLED[MAX_AX12_SERVOS] = {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0}; 
 
-struct // Bow 
+const struct // Bow 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -40,7 +40,7 @@ struct // Bow
 {0,0,496,0,0,0}, {296,496,1000,1000,296,400} 
 }; 
 
-struct // Bravo 
+const struct // Bravo 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -63,7 +63,7 @@ struct // Bravo
 {0,0,0,0,0}, {2000,496,496,496,496} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -86,7 +86,7 @@ struct //
 {0,0,0,0,0}, {1000,496,496,496,496} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -111,7 +111,7 @@ struct //
 {0,0,0,0,0,0,0}, {1000,496,496,496,496,1496,2000} 
 }; 
 
-struct // Rap chest 
+const struct // Rap chest 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -134,7 +134,7 @@ struct // Rap chest
 {0,0,0,0,0}, {1496,400,200,400,200} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -157,7 +157,7 @@ struct //
 {0,0,0,0,0}, {400,200,400,200,1496} 
 }; 
 
-struct // Scratch head 
+const struct // Scratch head 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -180,7 +180,7 @@ struct // Scratch head
 {0,0,0,0,0}, {1000,496,496,496,1000} 
 }; 
 
-struct // Push up 
+const struct // Push up 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -204,7 +204,7 @@ struct // Push up
 {0,0,0,0,0,0}, {1496,1000,1000,1000,1000,1000} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -224,7 +224,7 @@ struct //
 {0,0}, {1000,1000} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -249,7 +249,7 @@ struct //
 {0,0,0,0,0,0,0}, {72,1000,600,1000,600,1496,1496} 
 }; 
 
-struct // Hand standing 
+const struct // Hand standing 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -273,7 +273,7 @@ struct // Hand standing
 {0,0,0,0,0,0}, {1000,1000,496,496,1000,2040} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -293,7 +293,7 @@ struct //
 {496,496}, {1000,1000} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -316,7 +316,7 @@ struct //
 {0,0,0,0,0}, {2000,2000,1000,1000,2000} 
 }; 
 
-struct // R blocking 
+const struct // R blocking 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -335,7 +335,7 @@ struct // R blocking
 {400}, {600} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -355,7 +355,7 @@ struct //
 {200,0}, {1000,1000} 
 }; 
 
-struct // L blocking 
+const struct // L blocking 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -374,7 +374,7 @@ struct // L blocking
 {400}, {600} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -394,7 +394,7 @@ struct //
 {200,0}, {1000,1000} 
 }; 
 
-struct // L kick 
+const struct // L kick 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -418,7 +418,7 @@ struct // L kick
 {0,0,400,0,0,0}, {1000,400,200,600,1000,1000} 
 }; 
 
-struct // R kick 
+const struct // R kick 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -442,7 +442,7 @@ struct // R kick
 {0,0,400,0,0,0}, {1000,400,200,600,1000,1000} 
 }; 
 
-struct // R attack 
+const struct // R attack 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -464,7 +464,7 @@ struct // R attack
 {0,296,200,0}, {400,96,1000,1496} 
 }; 
 
-struct // L attack 
+const struct // L attack 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -486,7 +486,7 @@ struct // L attack
 {0,296,200,0}, {400,96,1000,1496} 
 }; 
 
-struct // F attack 
+const struct // F attack 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -511,7 +511,7 @@ struct // F attack
 {0,0,600,0,0,0,0}, {200,200,200,400,1000,1000,1000} 
 }; 
 
-struct // Defence 
+const struct // Defence 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -530,7 +530,7 @@ struct // Defence
 {0}, {400} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -550,7 +550,7 @@ struct //
 {0,0}, {496,496} 
 }; 
 
-struct // Sit down 
+const struct // Sit down 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -569,7 +569,7 @@ struct // Sit down
 {0}, {600} 
 }; 
 
-struct // Stand up 
+const struct // Stand up 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -589,7 +589,7 @@ struct // Stand up
 {0,0}, {496,496} 
 }; 
 
-struct // F getup 
+const struct // F getup 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -612,7 +612,7 @@ struct // F getup
 {0,0,0,0,0}, {200,200,1000,1000,2000} 
 }; 
 
-struct // B getup   
+const struct // B getup   
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -635,7 +635,7 @@ struct // B getup
 {0,0,0,0,0}, {496,496,1000,1000,1000} 
 }; 
 
-struct // Clap ready 
+const struct // Clap ready 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -654,7 +654,7 @@ struct // Clap ready
 {0}, {1000} 
 }; 
 
-struct // Clapping 
+const struct // Clapping 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -675,7 +675,7 @@ struct // Clapping
 {0,96,0}, {72,200,1000} 
 }; 
 
-struct // Walk Ready 
+const struct // Walk Ready 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -694,7 +694,7 @@ struct // Walk Ready
 {0}, {1000} 
 }; 
 
-struct // F_S_L 
+const struct // F_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -719,7 +719,7 @@ struct // F_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -744,7 +744,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // F_S_R 
+const struct // F_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -769,7 +769,7 @@ struct // F_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -794,7 +794,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // F_M_L 
+const struct // F_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -819,7 +819,7 @@ struct // F_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -844,7 +844,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // F_M_R 
+const struct // F_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -869,7 +869,7 @@ struct // F_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -894,7 +894,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // F_E_L 
+const struct // F_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -919,7 +919,7 @@ struct // F_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -944,7 +944,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // F_E_R 
+const struct // F_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -969,7 +969,7 @@ struct // F_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -994,7 +994,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // B_S_L 
+const struct // B_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1019,7 +1019,7 @@ struct // B_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1044,7 +1044,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // B_S_R 
+const struct // B_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1069,7 +1069,7 @@ struct // B_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1094,7 +1094,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // B_M_L 
+const struct // B_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1119,7 +1119,7 @@ struct // B_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1144,7 +1144,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // B_M_R 
+const struct // B_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1169,7 +1169,7 @@ struct // B_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1194,7 +1194,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // B_E_L 
+const struct // B_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1219,7 +1219,7 @@ struct // B_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1244,7 +1244,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // B_E_R 
+const struct // B_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1269,7 +1269,7 @@ struct // B_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1294,7 +1294,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // LT_S_L 
+const struct // LT_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1319,7 +1319,7 @@ struct // LT_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1344,7 +1344,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // LT_S_R 
+const struct // LT_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1369,7 +1369,7 @@ struct // LT_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1394,7 +1394,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // LT_M_L 
+const struct // LT_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1419,7 +1419,7 @@ struct // LT_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1444,7 +1444,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // LT_M_R 
+const struct // LT_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1469,7 +1469,7 @@ struct // LT_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1494,7 +1494,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // LT_E_L 
+const struct // LT_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1519,7 +1519,7 @@ struct // LT_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1544,7 +1544,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // LT_E_R 
+const struct // LT_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1569,7 +1569,7 @@ struct // LT_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1594,7 +1594,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // RT_S_L 
+const struct // RT_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1619,7 +1619,7 @@ struct // RT_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1644,7 +1644,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // RT_S_R 
+const struct // RT_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1669,7 +1669,7 @@ struct // RT_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1694,7 +1694,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // RT_M_L 
+const struct // RT_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1719,7 +1719,7 @@ struct // RT_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1744,7 +1744,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // RT_M_R 
+const struct // RT_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1769,7 +1769,7 @@ struct // RT_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1794,7 +1794,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // RT_E_L 
+const struct // RT_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1819,7 +1819,7 @@ struct // RT_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1844,7 +1844,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // RT_E_R 
+const struct // RT_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1869,7 +1869,7 @@ struct // RT_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1894,7 +1894,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // L_S_L 
+const struct // L_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1919,7 +1919,7 @@ struct // L_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1944,7 +1944,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // L_S_R 
+const struct // L_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1969,7 +1969,7 @@ struct // L_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -1994,7 +1994,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // L_M_L 
+const struct // L_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2019,7 +2019,7 @@ struct // L_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2044,7 +2044,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // L_M_R 
+const struct // L_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2069,7 +2069,7 @@ struct // L_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2094,7 +2094,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // L_E_L 
+const struct // L_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2119,7 +2119,7 @@ struct // L_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2144,7 +2144,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // L_E_R 
+const struct // L_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2169,7 +2169,7 @@ struct // L_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2194,7 +2194,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // R_S_L 
+const struct // R_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2219,7 +2219,7 @@ struct // R_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2244,7 +2244,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // R_S_R 
+const struct // R_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2269,7 +2269,7 @@ struct // R_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2294,7 +2294,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // R_M_L 
+const struct // R_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2319,7 +2319,7 @@ struct // R_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2344,7 +2344,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // R_M_R 
+const struct // R_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2369,7 +2369,7 @@ struct // R_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2394,7 +2394,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // R_E_L 
+const struct // R_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2419,7 +2419,7 @@ struct // R_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2444,7 +2444,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // R_E_R 
+const struct // R_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2469,7 +2469,7 @@ struct // R_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2494,7 +2494,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FLT_S_L 
+const struct // FLT_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2519,7 +2519,7 @@ struct // FLT_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2544,7 +2544,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FLT_S_R 
+const struct // FLT_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2569,7 +2569,7 @@ struct // FLT_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2594,7 +2594,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FLT_M_L 
+const struct // FLT_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2619,7 +2619,7 @@ struct // FLT_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2644,7 +2644,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FLT_M_R 
+const struct // FLT_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2669,7 +2669,7 @@ struct // FLT_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2694,7 +2694,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FLT_E_L 
+const struct // FLT_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2719,7 +2719,7 @@ struct // FLT_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2744,7 +2744,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FLT_E_R 
+const struct // FLT_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2769,7 +2769,7 @@ struct // FLT_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2794,7 +2794,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FRT_S_L 
+const struct // FRT_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2819,7 +2819,7 @@ struct // FRT_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2844,7 +2844,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FRT_S_R 
+const struct // FRT_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2869,7 +2869,7 @@ struct // FRT_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2894,7 +2894,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FRT_M_L 
+const struct // FRT_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2919,7 +2919,7 @@ struct // FRT_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2944,7 +2944,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FRT_M_R 
+const struct // FRT_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2969,7 +2969,7 @@ struct // FRT_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -2994,7 +2994,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FRT_E_L 
+const struct // FRT_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3019,7 +3019,7 @@ struct // FRT_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3044,7 +3044,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FRT_E_R 
+const struct // FRT_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3069,7 +3069,7 @@ struct // FRT_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3094,7 +3094,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BLT_S_L 
+const struct // BLT_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3119,7 +3119,7 @@ struct // BLT_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3144,7 +3144,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BLT_S_R 
+const struct // BLT_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3169,7 +3169,7 @@ struct // BLT_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3194,7 +3194,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BLT_M_L 
+const struct // BLT_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3219,7 +3219,7 @@ struct // BLT_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3244,7 +3244,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BLT_M_R 
+const struct // BLT_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3269,7 +3269,7 @@ struct // BLT_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3294,7 +3294,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BLT_E_L 
+const struct // BLT_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3319,7 +3319,7 @@ struct // BLT_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3344,7 +3344,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BLT_E_R 
+const struct // BLT_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3369,7 +3369,7 @@ struct // BLT_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3394,7 +3394,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BRT_S_L 
+const struct // BRT_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3419,7 +3419,7 @@ struct // BRT_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3444,7 +3444,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BRT_S_R 
+const struct // BRT_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3469,7 +3469,7 @@ struct // BRT_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3494,7 +3494,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BRT_M_L 
+const struct // BRT_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3519,7 +3519,7 @@ struct // BRT_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3544,7 +3544,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BRT_M_R 
+const struct // BRT_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3569,7 +3569,7 @@ struct // BRT_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3594,7 +3594,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BRT_E_L 
+const struct // BRT_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3619,7 +3619,7 @@ struct // BRT_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3644,7 +3644,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BRT_E_R 
+const struct // BRT_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3669,7 +3669,7 @@ struct // BRT_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3694,7 +3694,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // LTA_S_L 
+const struct // LTA_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3719,7 +3719,7 @@ struct // LTA_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3744,7 +3744,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // LTA_S_R 
+const struct // LTA_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3769,7 +3769,7 @@ struct // LTA_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3794,7 +3794,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // LTA_M_L 
+const struct // LTA_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3819,7 +3819,7 @@ struct // LTA_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3844,7 +3844,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // LTA_M_R 
+const struct // LTA_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3869,7 +3869,7 @@ struct // LTA_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3894,7 +3894,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // LTA_E_L 
+const struct // LTA_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3919,7 +3919,7 @@ struct // LTA_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3944,7 +3944,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // LTA_E_R 
+const struct // LTA_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3969,7 +3969,7 @@ struct // LTA_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -3994,7 +3994,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // RTA_S_L 
+const struct // RTA_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4019,7 +4019,7 @@ struct // RTA_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4044,7 +4044,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // RTA_S_R 
+const struct // RTA_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4069,7 +4069,7 @@ struct // RTA_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4094,7 +4094,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // RTA_M_L 
+const struct // RTA_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4119,7 +4119,7 @@ struct // RTA_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4144,7 +4144,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // RTA_M_R 
+const struct // RTA_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4169,7 +4169,7 @@ struct // RTA_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4194,7 +4194,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // RTA_E_L 
+const struct // RTA_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4219,7 +4219,7 @@ struct // RTA_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4244,7 +4244,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // RTA_E_R 
+const struct // RTA_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4269,7 +4269,7 @@ struct // RTA_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4294,7 +4294,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FL_S_L 
+const struct // FL_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4319,7 +4319,7 @@ struct // FL_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4344,7 +4344,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FL_S_R 
+const struct // FL_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4369,7 +4369,7 @@ struct // FL_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4394,7 +4394,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FL_M_L 
+const struct // FL_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4419,7 +4419,7 @@ struct // FL_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4444,7 +4444,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FL_M_R 
+const struct // FL_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4469,7 +4469,7 @@ struct // FL_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4494,7 +4494,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FL_E_L 
+const struct // FL_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4519,7 +4519,7 @@ struct // FL_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4544,7 +4544,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FL_E_R 
+const struct // FL_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4569,7 +4569,7 @@ struct // FL_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4594,7 +4594,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FR_S_L 
+const struct // FR_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4619,7 +4619,7 @@ struct // FR_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4644,7 +4644,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FR_S_R 
+const struct // FR_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4669,7 +4669,7 @@ struct // FR_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4694,7 +4694,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FR_M_L 
+const struct // FR_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4719,7 +4719,7 @@ struct // FR_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4744,7 +4744,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FR_M_R 
+const struct // FR_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4769,7 +4769,7 @@ struct // FR_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4794,7 +4794,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FR_E_L 
+const struct // FR_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4819,7 +4819,7 @@ struct // FR_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4844,7 +4844,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // FR_E_R 
+const struct // FR_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4869,7 +4869,7 @@ struct // FR_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4894,7 +4894,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BL_S_L 
+const struct // BL_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4919,7 +4919,7 @@ struct // BL_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4944,7 +4944,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BL_S_R 
+const struct // BL_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4969,7 +4969,7 @@ struct // BL_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -4994,7 +4994,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BL_M_L 
+const struct // BL_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5019,7 +5019,7 @@ struct // BL_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5044,7 +5044,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BL_M_R 
+const struct // BL_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5069,7 +5069,7 @@ struct // BL_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5094,7 +5094,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BL_E_L 
+const struct // BL_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5119,7 +5119,7 @@ struct // BL_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5144,7 +5144,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BL_E_R 
+const struct // BL_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5169,7 +5169,7 @@ struct // BL_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5194,7 +5194,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BR_S_L 
+const struct // BR_S_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5219,7 +5219,7 @@ struct // BR_S_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5244,7 +5244,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BR_S_R 
+const struct // BR_S_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5269,7 +5269,7 @@ struct // BR_S_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5294,7 +5294,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BR_M_L 
+const struct // BR_M_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5319,7 +5319,7 @@ struct // BR_M_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5344,7 +5344,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BR_M_R 
+const struct // BR_M_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5369,7 +5369,7 @@ struct // BR_M_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5394,7 +5394,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BR_E_L 
+const struct // BR_E_L 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5419,7 +5419,7 @@ struct // BR_E_L
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5444,7 +5444,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // BR_E_R 
+const struct // BR_E_R 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5469,7 +5469,7 @@ struct // BR_E_R
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct //  
+const struct //  
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5494,7 +5494,7 @@ struct //
 {0,0,0,0,0,0,0}, {80,80,80,80,80,80,80} 
 }; 
 
-struct // Balance 
+const struct // Balance 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 
@@ -5510,10 +5510,10 @@ struct // Balance
 {7,7,5,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6}, 
 224, 0, 1, 10, 5, 1, 
 {{987275543,3121508913,1502925307,2164959914,1008237191,1578097156}}, 
-{0}, {96} 
+{0}, {240} 
 }; 
 
-struct // Clap end 
+const struct // Clap end 
 { 
    const uint8 JointFlexibility[18]; 
    const uint8 NextPage; 

@@ -20,8 +20,8 @@ extern "C" {
 // Define which mode of transport is used
 // Use SERIAL_CABLE for Rs-232 cable from USB2Dynamixel to CM-510
 // Use ZIG_2_SERIAL for Zig-110 to Zig2Serial attached to USB2Dynamixel
-// #define SERIAL_CABLE
-#define	ZIG_2_SERIAL
+#define SERIAL_CABLE
+// #define	ZIG_2_SERIAL
 
 #ifdef	SERIAL_CABLE
   #define MAXNUM_SERIALBUFF	128 // maximum 128byte string (cable)

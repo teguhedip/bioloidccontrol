@@ -40,6 +40,8 @@
 #include "adc.h"
 #include "clock.h"
 #include "buzzer.h"
+#include "walk.h"
+
 
 // Global variables related to the finite state machine that governs execution
 extern volatile uint8 bioloid_command;			// current command
@@ -132,47 +134,50 @@ int adc_processSensorData()
 		return 1;
 	}
 	
-	// calculate joint offset values as per Robotis Task files
-	fb_joint_offset1 = (fwd_bwd_balance<<2) / 54;		// knee servo adjustment
-	fb_joint_offset2 = fb_joint_offset1 * 3;			// ankle servo uses 3x as much offset
-	rl_joint_offset1 = (left_right_balance<<2) / 40;	// hip servo adjustment
-	rl_joint_offset0 = rl_joint_offset1 * 2;			// ankle servo uses 2x as much offset
+	// if walking, calculate joint offset values as per Robotis Task files	
+	if( walk_getWalkState() == 1 ) 
+	{
+		fb_joint_offset1 = (fwd_bwd_balance<<2) / 54;		// knee servo adjustment
+		fb_joint_offset2 = fb_joint_offset1 * 3;			// ankle servo uses 3x as much offset
+		rl_joint_offset1 = (left_right_balance<<2) / 40;	// hip servo adjustment
+		rl_joint_offset0 = rl_joint_offset1 * 2;			// ankle servo uses 2x as much offset
 	
-	// TEST: printf("\nOffsets FB = %i, %i, RL= %i, %i", fb_joint_offset1, fb_joint_offset2, rl_joint_offset0, rl_joint_offset1);
+		// TEST: printf("\nOffsets FB = %i, %i, RL= %i, %i", fb_joint_offset1, fb_joint_offset2, rl_joint_offset0, rl_joint_offset1);
 	
-	// just in case reset all offset values
-	for (uint8 i=0; i<NUM_AX12_SERVOS; i++) {
-		joint_offset[i] = 0;
-	}
-	// and apply to servos - this code is dependent on the hardware configuration
+		// just in case reset all offset values
+		for (uint8 i=0; i<NUM_AX12_SERVOS; i++) {
+			joint_offset[i] = 0;
+		}
+		// and apply to servos - this code is dependent on the hardware configuration
 #ifdef HUMANOID_TYPEA	// Type A - all 18 servos are present and numbers match
-	joint_offset[13-1] = fb_joint_offset1;
-	joint_offset[15-1] = fb_joint_offset2;
-	joint_offset[14-1] = -fb_joint_offset1;
-	joint_offset[16-1] = -fb_joint_offset2;
-	joint_offset[9-1]  = rl_joint_offset1;
-	joint_offset[10-1] = rl_joint_offset1;
-	joint_offset[17-1] = -rl_joint_offset0;
-	joint_offset[18-1] = -rl_joint_offset0;
+		joint_offset[13-1] = fb_joint_offset1;
+		joint_offset[15-1] = fb_joint_offset2;
+		joint_offset[14-1] = -fb_joint_offset1;
+		joint_offset[16-1] = -fb_joint_offset2;
+		joint_offset[9-1]  = rl_joint_offset1;
+		joint_offset[10-1] = rl_joint_offset1;
+		joint_offset[17-1] = -rl_joint_offset0;
+		joint_offset[18-1] = -rl_joint_offset0;
 #endif
 #ifdef HUMANOID_TYPEB	// Type B - 16 servos and 9 and 10 are missing
-	joint_offset[13-3] = fb_joint_offset1;
-	joint_offset[15-3] = fb_joint_offset2;
-	joint_offset[14-3] = -fb_joint_offset1;
-	joint_offset[16-3] = -fb_joint_offset2;
-	joint_offset[17-3] = -rl_joint_offset0;
-	joint_offset[18-3] = -rl_joint_offset0;
+		joint_offset[13-3] = fb_joint_offset1;
+		joint_offset[15-3] = fb_joint_offset2;
+		joint_offset[14-3] = -fb_joint_offset1;
+		joint_offset[16-3] = -fb_joint_offset2;
+		joint_offset[17-3] = -rl_joint_offset0;
+		joint_offset[18-3] = -rl_joint_offset0;
 #endif
 #ifdef HUMANOID_TYPEC	// Type C - 16 servos and 7 and 8 are missing
-	joint_offset[13-3] = fb_joint_offset1;
-	joint_offset[15-3] = fb_joint_offset2;
-	joint_offset[14-3] = -fb_joint_offset1;
-	joint_offset[16-3] = -fb_joint_offset2;
-	joint_offset[9-3]  = rl_joint_offset1;
-	joint_offset[10-3] = rl_joint_offset1;
-	joint_offset[17-3] = -rl_joint_offset0;
-	joint_offset[18-3] = -rl_joint_offset0;
+		joint_offset[13-3] = fb_joint_offset1;
+		joint_offset[15-3] = fb_joint_offset2;
+		joint_offset[14-3] = -fb_joint_offset1;
+		joint_offset[16-3] = -fb_joint_offset2;
+		joint_offset[9-3]  = rl_joint_offset1;
+		joint_offset[10-3] = rl_joint_offset1;
+		joint_offset[17-3] = -rl_joint_offset0;
+		joint_offset[18-3] = -rl_joint_offset0;
 #endif
+	}	
 
 	return 0;
 }

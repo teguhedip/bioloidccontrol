@@ -57,11 +57,17 @@ extern "C" {
 #endif
 
 // Dynamixel configuration definitions 
-#define MAX_AX12_SERVOS		26
-#define MAX_MOTION_STEPS	7
+#define MAX_AX12_SERVOS			26
+#define MAX_MOTION_STEPS		7
+
+// select the sensors you use in your robot
+// #define GYRO_AND_DMS_ONLY		// default Bioloid Premium configuration
+#define ACCEL_AND_ULTRASONIC		// use this instead if you have an accelerometer as well
+
+#define PID_DIMENSION			2	// PID controller has 2 dimensions (x and y axis)
 
 // Top level ADC/Sensor related parameters - adjust as needed
-#define GYRO_READ_INTERVAL		16		// read gyro every 16ms 
+#define GYRO_READ_INTERVAL		10		// read gyro every 10ms 
 #define DMS_READ_INTERVAL		500		// read DMS every 500ms
 #define BATTERY_READ_INTERVAL	1000	// read battery once every second
 #define GYROX_SLIP_ERROR		170		// deviation from 0 interpreted as a slip (170 = 250deg/s rotation)
@@ -101,6 +107,10 @@ extern "C" {
 #define COMMAND_FRONT_GET_UP			22
 #define COMMAND_BACK_GET_UP				23
 #define COMMAND_RESET					24
+#define COMMAND_WAIT_SECONDS			25
+#define COMMAND_WAIT_MILLISECONDS		26
+#define COMMAND_SEQUENCE_START			27
+#define COMMAND_SEQUENCE_END			28
 #define COMMAND_NOT_FOUND				255
 
 // Motion Pages associated with non-walking commands

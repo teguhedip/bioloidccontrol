@@ -217,7 +217,11 @@ int walk_avoidObstacle(int obstacle_flag)
 	// first check if we are currently in obstacle avoidance mode
 	if ( obstacle_flag == 1 || obstacle_flag == 2 )
 	{
+#ifdef ACCEL_AND_ULTRASONIC
 		if ( adc_dms_distance > SAFE_DISTANCE && adc_ultrasonic_distance > SAFE_DISTANCE )
+#else
+		if ( adc_dms_distance > SAFE_DISTANCE )
+#endif
 		{
 			// have cleared the obstacle, return to walking forward
 			last_bioloid_command = bioloid_command;
@@ -232,7 +236,11 @@ int walk_avoidObstacle(int obstacle_flag)
 	// next check for a new obstacle
 	if ( obstacle_flag == 0 || obstacle_flag == -1 )
 	{
+#ifdef ACCEL_AND_ULTRASONIC
 		if ( adc_dms_distance < MINIMUM_DISTANCE || adc_ultrasonic_distance < MINIMUM_DISTANCE )
+#else
+		if ( adc_dms_distance < MINIMUM_DISTANCE )
+#endif
 		{
 			// have found an obstacle, start turning left
 			last_bioloid_command = bioloid_command;

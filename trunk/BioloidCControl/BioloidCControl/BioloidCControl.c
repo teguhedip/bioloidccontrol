@@ -36,13 +36,15 @@
 #include "buzzer.h"
 #include "button.h"
 #include "led.h"
-#include "serial.h"			// contains the command strings recognised
+#include "serial.h"			// contains the command strings recognized
 #include "adc.h"
 #include "dynamixel.h"
 #include "pose.h"
 #include "motion_f.h"
 #include "clock.h"
 #include "walk.h"
+#include "pid.h"
+#include "balance.h"
 
 // Array showing which Dynamixel servos are enabled (ID from 0 to 25)
 #ifdef HUMANOID_TYPEA
@@ -85,7 +87,12 @@ const char *buzzerSequence;
 //		AccelY= CM-510 Port1 = ADC1 = PORTF0
 //		AccelX= CM-510 Port2 = ADC2 = PORTF1
 //		Ultra = CM-510 Port6 = ADC6 = PORTF5
+#ifdef ACCEL_AND_ULTRASONIC
 volatile uint8 adc_sensor_enable[ADC_CHANNELS] = {1, 1, 1, 1, 1, 1}; 
+#endif
+#ifdef GYRO_AND_DMS_ONLY
+volatile uint8 adc_sensor_enable[ADC_CHANNELS] = {0, 0, 1, 1, 1, 0}; 
+#endif
 volatile int16 adc_sensor_val[ADC_CHANNELS] = {0, 0, 0, 0, 0, 0}; 	// array of sensor values
 volatile uint16 adc_battery_val = 0;	// battery voltage in millivolts
 volatile uint16 adc_gyrox_center = 0;	// gyro x center value
@@ -110,6 +117,11 @@ volatile int16 joint_offset[NUM_AX12_SERVOS];
 volatile uint8 current_motion_page = 0;
 volatile uint8 next_motion_page = 0;		// next motion page if we got new command
 volatile uint8 current_step = 0;			// number of the current motion page step
+
+// Input, Output and Setpoint variables for the PID controller (x and y-axis)
+volatile double pid_input[PID_DIMENSION] = { 0.0, 0.0 };
+volatile double pid_output[PID_DIMENSION] = { 0.0, 0.0 };
+volatile double pid_setpoint[PID_DIMENSION] = { 0.0, 0.0 };
 
 
 // the new implementation of AVR libc does not allow variables passed to _delay_ms
@@ -140,7 +152,8 @@ int main(void)
 	// enable interrupts
 	sei();
 	// print welcome message
-	printf("\nBioloid C Control V0.4\n");
+	printf("\nBioloid C Control V0.6\n");
+	printf("Press the START button on the CM-510 to continue.\n");
 	// reset the start button variable, something triggers the interrupt on start-up
 	start_button_pressed = FALSE;
 	
@@ -168,13 +181,17 @@ int main(void)
 	// set the walk state
 	walk_setWalkState(0);
 	obstacle_flag = 0;
+	
+	// initialize the PID controller for balancing
+	pid_init();
+	setupGyroKalman();
 
 	// initialize the ADC and take default readings
 	delay_ms(4000);			// wait 4s for gyros to stabilize
 	adc_init();
 
 	// print out default sensor values
-	printf("Battery, Gyro X, Y Accel X, Y Center = %i %i %i %i %i \n", adc_battery_val, adc_gyrox_center, adc_gyroy_center, adc_accelx_center, adc_accely_center);
+	printf("\nBattery, Gyro X, Y Accel X, Y Center = %imV %i %i %i %i", adc_battery_val, adc_gyrox_center, adc_gyroy_center, adc_accelx_center, adc_accely_center);
 	
 	// write out the command prompt
 	printf(	"\nReady for command.\n> ");
@@ -231,10 +248,26 @@ int main(void)
 		if( command_flag == 1 ) {
 			new_command = TRUE;
 			command_flag = 0;
+			// if we are coming out of BAL command, reset joint offsets
+			if( last_bioloid_command == COMMAND_BALANCE && bioloid_command != COMMAND_BALANCE ) {
+				for (uint8 i=0; i<NUM_AX12_SERVOS; i++)	 { joint_offset[i] = 0; }
+			}			
 		}
 		// TEST: printf("\n Command %i, New %i, MP %i, Next MP %i ", bioloid_command, new_command, current_motion_page, next_motion_page);
 		
 		// TIMING: timer2 = micros() - timer4 - timer1;
+		
+		// static balancing
+		if ( bioloid_command == COMMAND_BALANCE ) {
+// static balancing uses Kalman Filter or PID controller depending on availability of accelerometer
+#ifdef ACCEL_AND_ULTRASONIC
+			// first make sure the PID is turned on
+			if ( pid_getMode() != AUTOMATIC ) { pid_setMode(AUTOMATIC); }
+			staticRobotBalance();
+#endif
+		} else if ( pid_getMode() == 1 ) {
+			pid_setMode(MANUAL);
+		}		
 		
 		// execute motion steps
 		executeMotionSequence();	// takes 2.1ms when executing a step during walking or 3.3ms if unpacking a new motion page
