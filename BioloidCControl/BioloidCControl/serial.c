@@ -71,6 +71,7 @@ extern volatile uint8 last_bioloid_command;		// last command
 extern volatile uint8 flag_receive_ready;		// received complete command flag
 extern volatile uint8 current_motion_page;		// current motion page
 extern volatile uint8 next_motion_page;			// next motion page if we got new command
+extern volatile uint8 command_sequence_buffer[50];	// command buffer for sequences
 
 // internal function prototypes
 void serial_put_queue( unsigned char data );
@@ -118,7 +119,7 @@ void serial_init(long baudrate)
 	unsigned short Divisor;
 
 	// in case of ZigBee comms, enable the device
-#ifdef ZIG_2_SERIAL
+#if defined ZIG_2_SERIAL || defined RC100
 	DDRC  = 0x7F;
 	PORTC = 0x7E;
 	// to enable ZigBee communications we need PD5=low, PD6=high, make PD7 input and turn off pull-up on PD7

@@ -109,6 +109,7 @@ volatile uint8 bioloid_command = 0;			// current command
 volatile uint8 last_bioloid_command = 0;	// last command
 volatile bool  new_command = FALSE;			// flag that we got a new command
 volatile uint8 flag_receive_ready = 0;		// received complete command flag
+volatile uint8 command_sequence_buffer[50] = {0};	// command buffer for sequences
 
 // keep the current pose and joint offsets as global variables
 volatile int16 current_pose[NUM_AX12_SERVOS];
