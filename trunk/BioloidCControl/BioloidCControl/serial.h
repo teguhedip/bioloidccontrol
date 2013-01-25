@@ -67,8 +67,9 @@ int serialReceiveCommand();
 // Serial Port initialization with the specified baud rate
 void serial_init(long baudrate);
 
-// write a string to the serial port
-void serial_write( unsigned char *pData, int numbyte );
+// write out a data string to the serial port
+// return the number of bytes sent
+int serial_write( unsigned char *pData, int numbyte );
 
 // read a string from the serial port
 unsigned char serial_read( unsigned char *pData, int numbyte );

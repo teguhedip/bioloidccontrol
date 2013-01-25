@@ -21,7 +21,7 @@
     <OverrideVtor>false</OverrideVtor>
     <OverrideVtorValue />
     <eraseonlaunchrule>0</eraseonlaunchrule>
-    <AsfVersion>3.5.1</AsfVersion>
+    <AsfVersion>2.9.0</AsfVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputFileName>BioloidCControl</OutputFileName>
@@ -155,12 +155,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="rc100.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="rc100_hal.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="rc100_hal.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="serial.c">
