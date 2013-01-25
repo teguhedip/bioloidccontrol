@@ -108,8 +108,10 @@ SIGNAL(USART1_RX_vect)
 	{
 		// put each received byte into the buffer until full
 		serial_put_queue( c );
-		// echo the character
+#ifndef RC100
+		// echo the character (unless we are using RC-100)
 		std_putchar(c, device);
+#endif
 	}
 }
 
@@ -321,7 +323,8 @@ int serialReceiveCommand()
 
 
 // write out a data string to the serial port
-void serial_write( unsigned char *pData, int numbyte )
+// return the number of bytes sent
+int serial_write( unsigned char *pData, int numbyte )
 {
 	int count;
 
@@ -332,6 +335,7 @@ void serial_write( unsigned char *pData, int numbyte )
 		// before writing the next byte
 		UDR1 = pData[count];
 	}
+	return count;
 }
 
 // read a data string from the serial port
@@ -419,20 +423,30 @@ unsigned char serial_get_queue(void)
 int std_putchar(char c,  FILE* stream)
 {
 	char tx[2];
+	int result;
 	
     if( c == '\n' )
 	{
         tx[0] = '\r';
 		tx[1] = '\n';
-		serial_write( (unsigned char*)tx, 2 );
+		result = serial_write( (unsigned char*)tx, 2 );
+		if ( result != 2 ) {
+			return 1;
+		} else {
+			return 0;
+		}
 	}
 	else
 	{
 		tx[0] = c;
-		serial_write( (unsigned char*)tx, 1 );
+		result = serial_write( (unsigned char*)tx, 1 );
+		if ( result != 1 ) {
+			return 1;
+		} else {
+			return 0;
+		}
 	}
  
-    return 0;
 }
 
 // get a single character out of the read buffer

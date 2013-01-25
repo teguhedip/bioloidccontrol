@@ -9,31 +9,30 @@
  * 
 */
 
-#include "rc100_hal.h"
+#include "serial.h"
 #include "rc100.h"
 #include <avr/io.h>
 
-unsigned char gbRcvPacket[6];
-unsigned char gbRcvPacketNum;
+// RC-100 data packet related variables
+unsigned char  gbRcvPacket[6];
+unsigned char  gbRcvPacketNum;
 unsigned short gwRcvData;
-unsigned char gbRcvFlag;
+unsigned char  gbRcvFlag;
 
-int rc100_initialize( int devIndex )
+// Initialise the RC-100 related variables
+// The RC-100 uses a 6-byte data packet format
+void rc100_initialize( void )
 {
-	if( rc100_hal_open( devIndex, 57600 ) == 0) // Always fixed baudrate
-		return 0;
-
 	gbRcvFlag = 0;
 	gwRcvData = 0;
 	gbRcvPacketNum = 0;
-	return 1;
+	return;
 }
 
-void rc100_terminate(void)
-{
-	rc100_hal_close();
-}
-
+// send a data packet to the RC-100
+// there is no documentation that the RC-100 will receive / interpret a packet
+// return value:	1 - success
+//					0 - error
 int rc100_tx_data(int data)
 {
 	unsigned char SndPacket[6];
@@ -41,6 +40,7 @@ int rc100_tx_data(int data)
 	unsigned char lowbyte = (unsigned char)(word & 0xff);
 	unsigned char highbyte = (unsigned char)((word >> 8) & 0xff);
 
+	// construct the data packet in the RC-100 format
 	SndPacket[0] = 0xff;
 	SndPacket[1] = 0x55;
 	SndPacket[2] = lowbyte;
@@ -48,24 +48,31 @@ int rc100_tx_data(int data)
 	SndPacket[4] = highbyte;
 	SndPacket[5] = ~highbyte;
 	
-	if( rc100_hal_tx( SndPacket, 6 ) != 6 )
+	// write the packet to the serial port (ZigBee)
+	if( serial_write( SndPacket, 6 ) != 6 )
 		return 0;
 
 	return 1;
 }
 
-int rc100_rx_check(void)
+// The RC-100 uses the communication packet in the form below
+//			FF 55 Data_L ~Data_L Data_H ~Data_H
+// Example: DATA : 0x 1234
+// Packet : 0x FF 0x 55 0x 34 0x CB 0x 12 0x ED
+// function returns the value of the receive flag
+int rc100_rx_check( void )
 {
-	int RcvNum;
+	unsigned char RcvNum;
 	unsigned char checksum;
 	int i, j;
 
 	if(gbRcvFlag == 1)
 		return 1;
+	
 	// Fill packet buffer
 	if(gbRcvPacketNum < 6)
 	{
-		RcvNum = rc100_hal_rx( &gbRcvPacket[gbRcvPacketNum], (6 - gbRcvPacketNum) );
+		RcvNum = serial_read( &gbRcvPacket[gbRcvPacketNum], (6 - gbRcvPacketNum) );
 		if( RcvNum != -1 )
 			gbRcvPacketNum += RcvNum;
 	}
@@ -125,8 +132,12 @@ int rc100_rx_check(void)
 	return gbRcvFlag;
 }
 
-int rc100_rx_data(void)
+// return the data byte extracted from the packet
+int rc100_rx_data( void )
 {
+	// reset the receive flag
 	gbRcvFlag = 0;
+	
+	// return the data byte
 	return (int)gwRcvData;
 }

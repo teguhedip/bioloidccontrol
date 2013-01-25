@@ -16,15 +16,17 @@ extern "C" {
 #endif
 
 ///////////// device control methods ////////////////////////
-int rc100_initialize( int devIndex );
-void rc100_terminate(void);
+void rc100_initialize( void );
 
 ////////// communication methods ///////////////////////
-int rc100_tx_data(int data);
-int rc100_rx_check(void);
-int rc100_rx_data(void);
+int rc100_tx_data( int data );
+int rc100_rx_check( void );
+int rc100_rx_data( void );
 
 ////////// define RC-100 button key value ////////////////
+// When more than 2 buttons are pressed, the sum of pressed code values will be sent.
+// EX1)  Button U + Button 3 => Code value of Button U (1) + Code value of Button 3 (64) = Sending Value (65)
+// EX2)  Button 1 + Button 5 => Code value of Button 1 (16) + Code value of Button 5 (256) = Sending Value (272)
 #define RC100_BTN_U		(1)
 #define RC100_BTN_D		(2)
 #define RC100_BTN_L		(4)
