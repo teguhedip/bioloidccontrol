@@ -19,6 +19,7 @@
 #include <util/delay.h>
 #include "global.h"
 #include "serial.h"
+#include "rc100.h"
 
 
 // Command Strings List - kept in Flash to conserve RAM
@@ -64,6 +65,9 @@ volatile unsigned char gbSerialBuffer[MAXNUM_SERIALBUFF] = {0};
 volatile unsigned char gbSerialBufferHead = 0;
 volatile unsigned char gbSerialBufferTail = 0;
 static FILE *device;
+// RC-100 related variables
+volatile uint8 rc100_packet_count = 0;
+
 
 // global variables
 extern volatile uint8 bioloid_command;			// current command
@@ -74,6 +78,8 @@ extern volatile uint8 next_motion_page;			// next motion page if we got new comm
 extern volatile uint8 command_sequence_buffer[50];	// command buffer for sequences
 
 // internal function prototypes
+void serial_interpret_command ( void );
+void rc100_interpret_command ( void );
 void serial_put_queue( unsigned char data );
 unsigned char serial_get_queue(void);
 int std_putchar(char c,  FILE* stream);
@@ -93,6 +99,10 @@ SIGNAL(USART1_RX_vect)
 	char c;
 	
 	c = UDR1;
+
+// we need two versions of the ISR depending on terminal vs. RC-100 input
+// Terminal input version (serial cable or Zig2Serial)
+#ifndef RC100
 	// check if we have received a CR+LF indicating complete string
 	if (c == '\r')
 	{
@@ -108,12 +118,45 @@ SIGNAL(USART1_RX_vect)
 	{
 		// put each received byte into the buffer until full
 		serial_put_queue( c );
-#ifndef RC100
-		// echo the character (unless we are using RC-100)
+		// echo the character 
 		std_putchar(c, device);
-#endif
 	}
+#endif
+
+// RC-100 version, need to assemble 6-byte packets
+#ifdef RC100
+	// check if we have received a packet start byte (0xFF)
+	if ( c == 0xFF ) {
+		// new packet start - reset packet flag
+		rc100_packet_count = 1;
+	} else if ( rc100_packet_count == 1 ) { 
+		// second byte needs to be 0x55 for valid packet
+		if ( c == 0x55 ) {
+			rc100_packet_count++;
+		} else {
+			// invalid packet, ignore and reset
+			rc100_packet_count == 0;
+		}
+	} else if ( rc100_packet_count >= 2 ) {
+		// have valid header, start putting bytes in queue
+		if ( rc100_packet_count < 6 ) {
+			rc100_packet_count++;
+			serial_put_queue( c );
+		} else if ( rc100_packet_count == 6 ) {
+			// packet is finished, set flag
+			serial_put_queue( c );
+			flag_receive_ready = 1;
+			// reset counter and write termination byte
+			rc100_packet_count = 0;
+			serial_put_queue( 0xFF );
+		}
+	} else {
+		// ignore byte, not part of a valid packet
+		rc100_packet_count == 0;
+	}
+#endif
 }
+
 
 // initialize the serial port with the specified baud rate
 void serial_init(long baudrate)
@@ -177,6 +220,7 @@ void serial_init(long baudrate)
 	flag_receive_ready = 0;			
 }
 
+
 // Top level serial port task
 // manages all requests to read from or write to the serial port
 // Receives commands from the serial port and writes output (excluding printf)
@@ -185,23 +229,44 @@ void serial_init(long baudrate)
 //           int flag = 1 when new command has been received
 int serialReceiveCommand()
 {
-	char c1, c2, c3, c4, command[6], buffer[6];
-	int match;
 	
 	if (flag_receive_ready == 0)
 	{
 		// nothing to do, go straight back to main loop
 		return 0;
 	}
+
+// command interpretation depends on terminal vs. RC-100 input	
+#ifndef RC100
+	serial_interpret_command();
+#endif
+// RC-100 command interpretation
+#ifdef RC100
+	rc100_interpret_command();
+#endif
 	
-	// we have a new command, get characters 
+	// set command received flag only if valid command
+	if ( bioloid_command == COMMAND_NOT_FOUND ) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+// Re-assemble the 4-byte ASCII string into the matching command5
+void serial_interpret_command ( void )
+{
+	char c1, c2, c3, c4, command[6], buffer[6];
+	int match;
+
+	// we have a new command, get characters
 	c1 = serial_get_queue();
 	if ( c1 >= 'a' && c1 <= 'z' ) c1 = toupper(c1); // convert to upper case if required
 	command[0] = c1;
 	c2 = serial_get_queue();
 	if ( c2 >= 'a' && c2 <= 'z' ) c2 = toupper(c2); // convert to upper case if required
 	if( c2 == 0xFF ) c2 = ' ';						// pad with blanks to 4 characters
-	command[1] = c2;				
+	command[1] = c2;
 	c3 = serial_get_queue();
 	if ( c3 >= 'a' && c3 <= 'z' ) c3 = toupper(c3); // convert to upper case if required
 	if( c3 == 0xFF ) c3 = ' ';						// pad with blanks to 4 characters
@@ -213,7 +278,7 @@ int serialReceiveCommand()
 	command[4] = 0x00;			// finish the string
 
 	// flush the queue in case we received more than 4 bytes
-	do 
+	do
 	{
 		// need to do it once even for 4 bytes to get rid of the 0xFF marking the end of string
 		serial_get_queue();
@@ -231,7 +296,7 @@ int serialReceiveCommand()
 			last_bioloid_command = bioloid_command;
 			bioloid_command = i;
 			break;
-		} 
+		}
 		
 		// if we get to end of loop we haven't found a match
 		if ( i== NUMBER_OF_COMMANDS-1 )
@@ -245,32 +310,32 @@ int serialReceiveCommand()
 	// find the motion page associated with the command for non-walk commands
 	if ( bioloid_command != COMMAND_NOT_FOUND && bioloid_command >= COMMAND_WALK_READY )
 	{
-		// cross-check against the definitions in global.h 
+		// cross-check against the definitions in global.h
 		switch ( bioloid_command )
 		{
 			case COMMAND_WALK_READY:
-				next_motion_page = COMMAND_WALK_READY_MP;
-				break;
+			next_motion_page = COMMAND_WALK_READY_MP;
+			break;
 			case COMMAND_SIT:
-				next_motion_page = COMMAND_SIT_MP;
-				break;
+			next_motion_page = COMMAND_SIT_MP;
+			break;
 			case COMMAND_STAND:
-				next_motion_page = COMMAND_STAND_MP;
-				break;
+			next_motion_page = COMMAND_STAND_MP;
+			break;
 			case COMMAND_BALANCE:
-				next_motion_page = COMMAND_BALANCE_MP;
-				break;
+			next_motion_page = COMMAND_BALANCE_MP;
+			break;
 			case COMMAND_BACK_GET_UP:
-				next_motion_page = COMMAND_BACK_GET_UP_MP;
-				break;
+			next_motion_page = COMMAND_BACK_GET_UP_MP;
+			break;
 			case COMMAND_FRONT_GET_UP:
-				next_motion_page = COMMAND_FRONT_GET_UP_MP;
-				break;
+			next_motion_page = COMMAND_FRONT_GET_UP_MP;
+			break;
 			case COMMAND_RESET:
-				next_motion_page = COMMAND_RESET_MP;
-				break;
+			next_motion_page = COMMAND_RESET_MP;
+			break;
 		}
-	} 
+	}
 	// otherwise it's easier to calculate the motion page for walk commands
 	else if( bioloid_command >= COMMAND_WALK_FORWARD && bioloid_command < COMMAND_WALK_READY )
 	{
@@ -279,7 +344,7 @@ int serialReceiveCommand()
 	}
 	
 	// before we leave we need to check for special case of Motion Page command
-	if( bioloid_command == COMMAND_NOT_FOUND ) 
+	if( bioloid_command == COMMAND_NOT_FOUND )
 	{
 		if ( c1 == 'M' && (c2 >= '0' && c2 <= '9') )
 		{
@@ -290,13 +355,13 @@ int serialReceiveCommand()
 			if ( c3 >= '0' && c3 <= '9' )
 			{
 				next_motion_page = next_motion_page * 10;
-				next_motion_page += (c3-48); 
+				next_motion_page += (c3-48);
 			}
 			// check if next character is still a number
 			if ( c4 >= '0' && c4 <= '9' )
 			{
 				next_motion_page = next_motion_page * 10;
-				next_motion_page += (c4-48); 
+				next_motion_page += (c4-48);
 			}
 		}
 	}
@@ -311,14 +376,135 @@ int serialReceiveCommand()
 		printf( "%c%c%c%c - Command # %i\n> ", c1, c2, c3, c4, bioloid_command );
 	} else {
 		printf( "%c%c%c%c \nUnknown Command! \n> ", c1, c2, c3, c4 );
-	}	
-	
-	// set command received flag only if valid command
-	if ( bioloid_command == COMMAND_NOT_FOUND ) {
-		return 0;
-	} else {
-		return 1;
 	}
+}
+
+void rc100_interpret_command ( void )
+{
+	char c1, c2, c3, c4;
+	unsigned short rc100_data;
+	
+	// get the 4 bytes out of the buffer queue
+	c1 = serial_get_queue();
+	c2 = serial_get_queue();
+	c3 = serial_get_queue();
+	c4 = serial_get_queue();
+	
+	// reset data word
+	rc100_data = 0;
+	
+	// check that ~(Byte 4) = Byte 3
+	if( c1 == ~c2 )
+	{
+		// check that ~(Byte 6) = Byte 5
+		if( c3 == ~c4 )
+		{
+			// all checks OK, assemble data word from low and high byte
+			rc100_data = (unsigned short)((c3 << 8) & 0xFF00);
+			rc100_data += c1;
+		}
+	}
+
+	// interpret the command
+	if ( rc100_data != 0 )
+	{
+		last_bioloid_command = bioloid_command;
+		
+		// define your RC-100 button-command assignments here
+		switch ( rc100_data )
+		{
+			case RC100_BTN_U:
+				bioloid_command = COMMAND_WALK_FORWARD;
+				next_motion_page = 12*(bioloid_command-1) + COMMAND_WALK_READY_MP + 1;
+			break;
+			case RC100_BTN_D:
+				bioloid_command = COMMAND_WALK_BACKWARD;
+				next_motion_page = 12*(bioloid_command-1) + COMMAND_WALK_READY_MP + 1;
+			break;
+			case RC100_BTN_L:
+				bioloid_command = COMMAND_WALK_TURN_LEFT;
+				next_motion_page = 12*(bioloid_command-1) + COMMAND_WALK_READY_MP + 1;
+			break;
+			case RC100_BTN_R:
+				bioloid_command = COMMAND_WALK_TURN_RIGHT;
+				next_motion_page = 12*(bioloid_command-1) + COMMAND_WALK_READY_MP + 1;
+			break;
+			case RC100_BTN_U_AND_L:
+				bioloid_command = COMMAND_WALK_FWD_LEFT_SIDE;
+				next_motion_page = 12*(bioloid_command-1) + COMMAND_WALK_READY_MP + 1;
+			break;
+			case RC100_BTN_U_AND_R:
+				bioloid_command = COMMAND_WALK_FWD_RIGHT_SIDE;
+				next_motion_page = 12*(bioloid_command-1) + COMMAND_WALK_READY_MP + 1;
+			break;
+			case RC100_BTN_D_AND_L:
+				bioloid_command = COMMAND_WALK_LEFT_SIDE;
+				next_motion_page = 12*(bioloid_command-1) + COMMAND_WALK_READY_MP + 1;
+			break;
+			case RC100_BTN_D_AND_R:
+				bioloid_command = COMMAND_WALK_RIGHT_SIDE;
+				next_motion_page = 12*(bioloid_command-1) + COMMAND_WALK_READY_MP + 1;
+			break;
+			case RC100_BTN_5:
+				bioloid_command = COMMAND_SIT;
+				next_motion_page = COMMAND_SIT_MP;
+			break;
+			case RC100_BTN_6:
+				bioloid_command = COMMAND_STOP;
+			break;
+			case RC100_BTN_U_AND_1:
+				bioloid_command = COMMAND_FRONT_GET_UP;
+				next_motion_page = COMMAND_FRONT_GET_UP_MP;
+			break;
+			case RC100_BTN_D_AND_1:
+				bioloid_command = COMMAND_BACK_GET_UP;
+				next_motion_page = COMMAND_BACK_GET_UP_MP;
+			break;
+			case RC100_BTN_L_AND_1:
+				bioloid_command = COMMAND_MOTIONPAGE;
+				next_motion_page = 8;
+			break;
+			case RC100_BTN_R_AND_1:
+				bioloid_command = COMMAND_MOTIONPAGE;
+				next_motion_page = 11;
+			break;
+			case RC100_BTN_U_AND_2:
+				bioloid_command = COMMAND_MOTIONPAGE;
+				next_motion_page = 5;
+			break;
+			case RC100_BTN_D_AND_2:
+				bioloid_command = COMMAND_MOTIONPAGE;
+				next_motion_page = 7;
+			break;
+			case RC100_BTN_L_AND_2:
+				bioloid_command = COMMAND_MOTIONPAGE;
+				next_motion_page = 2;
+			break;
+			case RC100_BTN_R_AND_2:
+				bioloid_command = COMMAND_MOTIONPAGE;
+				next_motion_page = 1;
+			break;
+			default:
+				bioloid_command = COMMAND_NOT_FOUND;
+			break;
+		}
+
+	} 
+	else
+	{
+		last_bioloid_command = bioloid_command;
+		bioloid_command = COMMAND_NOT_FOUND;
+	}
+
+	// flush the queue in case we received more than 4 bytes
+	do
+	{
+		// need to do it once even for 4 bytes to get rid of the 0xFF marking the end of string
+		serial_get_queue();
+	} while (serial_get_qstate() != 0);
+	
+	// reset the flag
+	flag_receive_ready = 0;
 }
 
 
