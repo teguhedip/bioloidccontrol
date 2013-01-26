@@ -66,23 +66,24 @@ int rc100_rx_check( void )
 	unsigned char checksum;
 	int i, j;
 
-	if(gbRcvFlag == 1)
+	// have unprocessed received data word, return
+	if( gbRcvFlag == 1 )
 		return 1;
 	
 	// Fill packet buffer
-	if(gbRcvPacketNum < 6)
+	if( gbRcvPacketNum < 6 )
 	{
 		RcvNum = serial_read( &gbRcvPacket[gbRcvPacketNum], (6 - gbRcvPacketNum) );
 		if( RcvNum != -1 )
 			gbRcvPacketNum += RcvNum;
 	}
-	// Find header
 	
-	if(gbRcvPacketNum >= 2)
+	// Find header	
+	if( gbRcvPacketNum >= 2 )
 	{
 		for( i=0; i<gbRcvPacketNum; i++ )
 		{
-			if(gbRcvPacket[i] == 0xff)
+			if( gbRcvPacket[i] == 0xff )
 			{
 				if(i <= (gbRcvPacketNum - 2))
 				{
@@ -93,9 +94,9 @@ int rc100_rx_check( void )
 		}
 		if(i > 0)
 		{
-			if(i == gbRcvPacketNum)
+			if( i == gbRcvPacketNum )
 			{
-				// Can not find header
+				// Cannot find header
 				if(gbRcvPacket[i - 1] == 0xff)
 					i--;
 			}
@@ -108,19 +109,25 @@ int rc100_rx_check( void )
 			gbRcvPacketNum -= i;
 		}
 	}
-	// Verify packet
+	
+	// Verify packet, expect 6 bytes
 	if(gbRcvPacketNum == 6)
 	{
+		// first byte needs to be 0xFF, second byte 0x55
 		if(gbRcvPacket[0] == 0xff && gbRcvPacket[1] == 0x55)
 		{
+			// check that ~(Byte 3) = Byte 4
 			checksum = ~gbRcvPacket[3];
 			if(gbRcvPacket[2] == checksum)
 			{
+				// check that ~(Byte 5) = Byte 6
 				checksum = ~gbRcvPacket[5];
 				if(gbRcvPacket[4] == checksum)
 				{
+					// all checks OK, assemble data word from low and high byte
 					gwRcvData = (unsigned short)((gbRcvPacket[4] << 8) & 0xff00);
 					gwRcvData += gbRcvPacket[2];
+					// set receive flag
 					gbRcvFlag = 1;
 				}
 			}
