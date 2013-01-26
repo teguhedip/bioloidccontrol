@@ -68,7 +68,6 @@ static FILE *device;
 // RC-100 related variables
 volatile uint8 rc100_packet_count = 0;
 
-
 // global variables
 extern volatile uint8 bioloid_command;			// current command
 extern volatile uint8 last_bioloid_command;		// last command
@@ -102,7 +101,7 @@ SIGNAL(USART1_RX_vect)
 
 // we need two versions of the ISR depending on terminal vs. RC-100 input
 // Terminal input version (serial cable or Zig2Serial)
-#ifndef RC100
+#if defined ZIG_2_SERIAL || defined SERIAL_CABLE
 	// check if we have received a CR+LF indicating complete string
 	if (c == '\r')
 	{
@@ -124,6 +123,10 @@ SIGNAL(USART1_RX_vect)
 #endif
 
 // RC-100 version, need to assemble 6-byte packets
+// The RC-100 uses the communication packet in the form below
+//			FF 55 Data_L ~Data_L Data_H ~Data_H
+// Example: DATA = 0x1234
+// Packet : 0xFF 0x55 0x34 0xCB 0x12 0xED
 #ifdef RC100
 	// check if we have received a packet start byte (0xFF)
 	if ( c == 0xFF ) {
@@ -135,14 +138,14 @@ SIGNAL(USART1_RX_vect)
 			rc100_packet_count++;
 		} else {
 			// invalid packet, ignore and reset
-			rc100_packet_count == 0;
+			rc100_packet_count = 0;
 		}
 	} else if ( rc100_packet_count >= 2 ) {
 		// have valid header, start putting bytes in queue
-		if ( rc100_packet_count < 6 ) {
+		if ( rc100_packet_count < 5 ) {
 			rc100_packet_count++;
 			serial_put_queue( c );
-		} else if ( rc100_packet_count == 6 ) {
+		} else if ( rc100_packet_count == 5 ) {
 			// packet is finished, set flag
 			serial_put_queue( c );
 			flag_receive_ready = 1;
@@ -237,7 +240,7 @@ int serialReceiveCommand()
 	}
 
 // command interpretation depends on terminal vs. RC-100 input	
-#ifndef RC100
+#if defined ZIG_2_SERIAL || defined SERIAL_CABLE
 	serial_interpret_command();
 #endif
 // RC-100 command interpretation
@@ -379,6 +382,8 @@ void serial_interpret_command ( void )
 	}
 }
 
+// verify validity of packet data 
+// match to command assignment for the allowed button combinations
 void rc100_interpret_command ( void )
 {
 	char c1, c2, c3, c4;
