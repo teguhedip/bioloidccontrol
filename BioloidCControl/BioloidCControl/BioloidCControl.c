@@ -184,8 +184,10 @@ int main(void)
 	obstacle_flag = 0;
 	
 	// initialize the PID controller for balancing
+#ifdef ACCEL_AND_ULTRASONIC
 	pid_init();
 	setupGyroKalman();
+#endif
 
 	// initialize the ADC and take default readings
 	delay_ms(4000);			// wait 4s for gyros to stabilize

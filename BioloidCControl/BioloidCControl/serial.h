@@ -21,14 +21,14 @@ extern "C" {
 // Use SERIAL_CABLE for Rs-232 cable from USB2Dynamixel to CM-510
 // Use ZIG_2_SERIAL for Zig-110 to Zig2Serial attached to USB2Dynamixel
 // Use RC100 for RC-100 remote control with Zig-110
-#define SERIAL_CABLE
+// #define SERIAL_CABLE
 // #define ZIG_2_SERIAL
-// #define RC100
+#define RC100
 
 #ifdef	SERIAL_CABLE
   #define MAXNUM_SERIALBUFF	256 // maximum 256byte string (cable)
 #else
-  #define MAXNUM_SERIALBUFF	256 // maximum 256byte string (Zig2Serial)
+  #define MAXNUM_SERIALBUFF	256 // maximum 256byte string (Zig2Serial/RC-100)
 #endif
 #define DEFAULT_BAUDRATE	34  // 57132(57600)bps
 
@@ -39,21 +39,6 @@ extern "C" {
   #define ZIG110_RESET	{ DDRD |= 0x10; PORTD |= 0x10; _delay_ms(10); PORTD &= ~0x10; }
   #define ZIG110_DOWN	{ DDRD |= 0x10; PORTD |= 0x10; }
   #define ZIG110_UP		{ DDRD |= 0x10; PORTD &= ~0x10; }
-#endif
-
-// RC-100
-#ifdef RC100
-  // define RC-100 buttons (see zigbee.h in RoboPlus embedded C code)
-  #define RC100_BTN_U		(1)
-  #define RC100_BTN_D		(2)
-  #define RC100_BTN_L		(4)
-  #define RC100_BTN_R		(8)
-  #define RC100_BTN_1		(16)
-  #define RC100_BTN_2		(32)
-  #define RC100_BTN_3		(64)
-  #define RC100_BTN_4		(128)
-  #define RC100_BTN_5		(256)
-  #define RC100_BTN_6		(512)
 #endif
 
 // Top level serial port task
