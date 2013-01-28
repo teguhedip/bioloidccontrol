@@ -95,7 +95,7 @@ static inline void delay_ms(uint16 count) {
 // ISR for serial receive, Serial Port/ZigBEE use USART1
 SIGNAL(USART1_RX_vect)
 {
-	char c;
+	unsigned char c;
 	
 	c = UDR1;
 
@@ -128,8 +128,14 @@ SIGNAL(USART1_RX_vect)
 // Example: DATA = 0x1234
 // Packet : 0xFF 0x55 0x34 0xCB 0x12 0xED
 #ifdef RC100
+	// The RC-100 repeats sending packets as long as the button is pressed
+	// This means we need to ignore packets not yet processed
+	if ( flag_receive_ready == 1 ) {
+		return;
+	}
 	// check if we have received a packet start byte (0xFF)
-	if ( c == 0xFF ) {
+	// BEWARE: the ~Data_H part of a packet can be 0xFF - need to exclude
+	if ( c == 0xFF && rc100_packet_count == 0 ) {
 		// new packet start - reset packet flag
 		rc100_packet_count = 1;
 	} else if ( rc100_packet_count == 1 ) { 
@@ -232,7 +238,7 @@ void serial_init(long baudrate)
 //           int flag = 1 when new command has been received
 int serialReceiveCommand()
 {
-	
+	// check for new command	
 	if (flag_receive_ready == 0)
 	{
 		// nothing to do, go straight back to main loop
@@ -386,8 +392,8 @@ void serial_interpret_command ( void )
 // match to command assignment for the allowed button combinations
 void rc100_interpret_command ( void )
 {
-	char c1, c2, c3, c4;
-	unsigned short rc100_data;
+	uint8 c1, c2, c3, c4, checksum;
+	uint16 rc100_data;
 	
 	// get the 4 bytes out of the buffer queue
 	c1 = serial_get_queue();
@@ -399,10 +405,12 @@ void rc100_interpret_command ( void )
 	rc100_data = 0;
 	
 	// check that ~(Byte 4) = Byte 3
-	if( c1 == ~c2 )
+	checksum = ~c2;
+	if( c1 == checksum )
 	{
 		// check that ~(Byte 6) = Byte 5
-		if( c3 == ~c4 )
+		checksum = ~c4;
+		if( c3 == checksum )
 		{
 			// all checks OK, assemble data word from low and high byte
 			rc100_data = (unsigned short)((c3 << 8) & 0xFF00);
@@ -497,9 +505,23 @@ void rc100_interpret_command ( void )
 	} 
 	else
 	{
+		// because the RC-100 sends a 0 byte when you lift the button press
+		// we just ignore the 0 byte and continue executing the last command
 		last_bioloid_command = bioloid_command;
 		bioloid_command = COMMAND_NOT_FOUND;
 	}
+
+	/* TEST
+	// enable ZigBee communications we need PD5=high, PD6=low, make PD7 input and turn off pull-up on PD7
+	PORTD |= 0x80;
+	PORTD |= 0x20;
+	PORTD &= ~0x40;
+	printf("\nRC100-Data = %i, Command = %i, Next MP = %i", rc100_data, bioloid_command, next_motion_page);
+	// re-enable ZigBee communications we need PD5=low, PD6=high, make PD7 input and turn off pull-up on PD7
+	PORTD &= ~0x80;
+	PORTD &= ~0x20;
+	PORTD |= 0x40;
+	TEST */
 
 	// flush the queue in case we received more than 4 bytes
 	do

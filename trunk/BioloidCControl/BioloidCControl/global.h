@@ -61,8 +61,8 @@ extern "C" {
 #define MAX_MOTION_STEPS		7
 
 // select the sensors you use in your robot
-// #define GYRO_AND_DMS_ONLY		// default Bioloid Premium configuration
-#define ACCEL_AND_ULTRASONIC		// use this instead if you have an accelerometer as well
+#define GYRO_AND_DMS_ONLY		// default Bioloid Premium configuration
+// #define ACCEL_AND_ULTRASONIC		// use this instead if you have an accelerometer as well
 
 #define PID_DIMENSION			2	// PID controller has 2 dimensions (x and y axis)
 

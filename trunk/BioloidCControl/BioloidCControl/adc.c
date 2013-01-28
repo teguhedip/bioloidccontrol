@@ -109,12 +109,19 @@ int adc_processSensorData()
 	// calculate gyro deviations from center values
 	fwd_bwd_balance = adc_sensor_val[ADC_GYROX-1] - (int16) adc_gyrox_center;
 	left_right_balance = adc_sensor_val[ADC_GYROY-1] - (int16) adc_gyroy_center;
-	// calculate accelerations as per ADXL203 datasheet
-	adc_accelx = adc_sensor_val[ADC_ACCELX-1] - adc_accelx_center;	// center value is ~2500mV, produces acceleration in mg
-	adc_accely = adc_sensor_val[ADC_ACCELY-1] - adc_accely_center;	// center value is ~2500mV, produces acceleration in mg
-	// calculate distance from Maxbotix EZ0 sensor (avoid floating point calculations for speed reasons)
-	adc_ultrasonic_distance = adc_sensor_val[ADC_ULTRASONIC-1] >> 2;	// gives approximate distance in cm (true factor is 0.259cm per mV)
+	// calculate DMS distance
 	adc_dms_distance = adc_convertDMStoCM(adc_sensor_val[ADC_DMS-1]);	// gives approximate distance in cm (no interpolation)
+	// calculate accelerations as per ADXL203 datasheet
+	if (adc_sensor_enable[ADC_ACCELX-1] == 1) {
+		adc_accelx = adc_sensor_val[ADC_ACCELX-1] - adc_accelx_center;	// center value is ~2500mV, produces acceleration in mg
+	}	
+	if (adc_sensor_enable[ADC_ACCELY-1] == 1) {
+		adc_accely = adc_sensor_val[ADC_ACCELY-1] - adc_accely_center;	// center value is ~2500mV, produces acceleration in mg
+	}	
+	// calculate distance from Maxbotix EZ0 sensor (avoid floating point calculations for speed reasons)
+	if (adc_sensor_enable[ADC_ULTRASONIC-1] == 1) {
+		adc_ultrasonic_distance = adc_sensor_val[ADC_ULTRASONIC-1] >> 2;	// gives approximate distance in cm (true factor is 0.259cm per mV)
+	}	
 	
 	// TEST: printf("\n%i, %i, %i, %i, %i, %i, %i", current_motion_page, current_step, fwd_bwd_balance, left_right_balance, adc_accelx, adc_accely, adc_ultras);
 	
