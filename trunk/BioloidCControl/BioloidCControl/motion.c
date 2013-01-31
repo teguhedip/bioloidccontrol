@@ -341,6 +341,8 @@ void motionPageInit()
 	motion_pointer[223] = (uint8*) &MotionPage223; 
 	motion_pointer[224] = (uint8*) &MotionPage224; 
 	motion_pointer[225] = (uint8*) &MotionPage225; 
+	motion_pointer[226] = (uint8*) &MotionPage226; 
+	motion_pointer[227] = (uint8*) &MotionPage227;
 }
 
 // This function executes robot motions consisting of one or more motion 
@@ -352,7 +354,7 @@ void executeMotionSequence()
 	uint8 moving_flag, temp1;
 	int error_status, comm_status, left_right_step;
 	
-	// TEST: if ( motion_state != MOTION_STOPPED ) printf("\nMotion State = %i, Walk State = %i, Current Step = %i", motion_state, walkGetWalkState(), current_step);
+	// TEST: if ( motion_state != MOTION_STOPPED ) printf("\nMotion State = %i, Walk State = %i, Current Step = %i", motion_state, walk_getWalkState(), current_step);
 	
 	// check the states in order of likelihood of occurrence
 	// the most likely state is that a motion step is still being executed or paused
@@ -712,6 +714,8 @@ unsigned long executeMotionStep(int Step)
 	// Make sure we never access random memory by accident and damage the robot
 	if ( Step > 0 && Step <= CurrentMotion.Steps )
 	{
+		// TEST printf("\nStarting Motion Step %i", Step);
+		
 		// create the servo values array 
 		for (int j=0; j<NUM_AX12_SERVOS; j++)
 			{ goalPose[j] = CurrentMotion.StepValues[Step-1][j]; }

@@ -21,9 +21,9 @@ extern "C" {
 // Use SERIAL_CABLE for Rs-232 cable from USB2Dynamixel to CM-510
 // Use ZIG_2_SERIAL for Zig-110 to Zig2Serial attached to USB2Dynamixel
 // Use RC100 for RC-100 remote control with Zig-110
-// #define SERIAL_CABLE
+#define SERIAL_CABLE
 // #define ZIG_2_SERIAL
-#define RC100
+// #define RC100
 
 #ifdef	SERIAL_CABLE
   #define MAXNUM_SERIALBUFF	256 // maximum 256byte string (cable)

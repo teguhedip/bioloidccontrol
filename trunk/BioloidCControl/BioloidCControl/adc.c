@@ -41,6 +41,7 @@
 #include "clock.h"
 #include "buzzer.h"
 #include "walk.h"
+#include "motion_f.h"
 
 
 // Global variables related to the finite state machine that governs execution
@@ -85,25 +86,28 @@ const uint16 DMSTableCM[DMSTablePoints]=
 unsigned long last_gyro_read = 0;
 unsigned long last_dms_read = 0;
 unsigned long last_battery_read = 0;
-
+double gyro_integral = 0.0;
+double gyro_value = 0.0;
+uint8 start_integration = 0;
+unsigned long start_time = 0;
 
 // function to process the sensor data when new data become available
 // detects slips (robot has fallen over forward/backward)
 // and also low battery alarms at this stage
 // Returns:  int flag = 0 no new command
 //           int flag = 1 new command
+//			 int flag = 2 major alarm
 int adc_processSensorData()
 {
 	int16 fb_joint_offset1, fb_joint_offset2, rl_joint_offset0, rl_joint_offset1;
 
 	// check battery voltage still within limits
 	if ( adc_battery_val < LOW_VOLTAGE_CUTOFF ) {
-		// too low - play alarm and stop 
+		// too low - play alarm and sit
+		// this stops the command loop
 		buzzer_playFromProgramSpace(melody5);
-		last_bioloid_command = bioloid_command;
-		bioloid_command = COMMAND_SIT;
-		next_motion_page = COMMAND_SIT_MP;
-		return 1;
+		executeMotion( COMMAND_SIT_MP );
+		return 2;	// set major alarm
 	}
 	
 	// calculate gyro deviations from center values
@@ -123,22 +127,67 @@ int adc_processSensorData()
 		adc_ultrasonic_distance = adc_sensor_val[ADC_ULTRASONIC-1] >> 2;	// gives approximate distance in cm (true factor is 0.259cm per mV)
 	}	
 	
-	// TEST: printf("\n%i, %i, %i, %i, %i, %i, %i", current_motion_page, current_step, fwd_bwd_balance, left_right_balance, adc_accelx, adc_accely, adc_ultras);
+	// TEST: printf("\nMP = %i, Step = %i, FB-Bal = %i, LR-Bal = %i", current_motion_page, current_step, fwd_bwd_balance, left_right_balance );
 	
 	// did read sensors - check if robot slipped
-	if( fwd_bwd_balance > GYROX_SLIP_ERROR ) {
+	// trigger front/back get up commands unless they are already being executed
+	if( fwd_bwd_balance > GYROX_SLIP_ERROR && bioloid_command != COMMAND_BACK_GET_UP ) {
 		// backward slip
 		last_bioloid_command = bioloid_command;
 		bioloid_command = COMMAND_BACK_GET_UP;
 		next_motion_page = COMMAND_BACK_GET_UP_MP;
+		start_integration = 0;
 		return 1;
 	}
-	else if( fwd_bwd_balance < -GYROX_SLIP_ERROR ) {
+	else if( fwd_bwd_balance < -GYROX_SLIP_ERROR && bioloid_command != COMMAND_FRONT_GET_UP ) {
 		// forward slip
 		last_bioloid_command = bioloid_command;
 		bioloid_command = COMMAND_FRONT_GET_UP;
 		next_motion_page = COMMAND_FRONT_GET_UP_MP;
+		start_integration = 0;
 		return 1;
+	}
+	
+	// start integration of gyro values for F/B Get Up commands
+	// we need this to figure out if the motion has been successful
+	if ( bioloid_command == COMMAND_FRONT_GET_UP || bioloid_command == COMMAND_BACK_GET_UP )
+	{
+		// start integration when step 2 starts
+		if ( current_step == 2 && start_integration == 0 ) {
+			gyro_integral = 0.0;
+			start_integration = 1;
+			start_time = millis();
+		}
+		
+		// integrate the gyrox values 
+		if ( start_integration == 1 )
+		{
+			gyro_value = 300.0 * (adc_sensor_val[ADC_GYROX-1] - (int16)adc_gyrox_center) / 205;		// convert to deg/s
+			gyro_integral +=  gyro_value * (double)( last_gyro_read - start_time ) / 1000;		// time is in ms
+			// TEST printf("\nT1 = %lu, T2 = %lu, ADCGx = %i, Gx = %i, IGx = %i", start_time, last_gyro_read, adc_sensor_val[ADC_GYROX-1], (int16)gyro_value, (int16)gyro_integral );
+			start_time = last_gyro_read;
+		}
+		
+		// check if command was successful
+		if ( bioloid_command == COMMAND_FRONT_GET_UP && current_step == 6 )
+		{
+			// we would require integrated gyro measurements to exceed 70deg
+			if ( (int16)gyro_integral < 70 ) {
+				last_bioloid_command = bioloid_command;
+				bioloid_command = COMMAND_FRONT_GET_UP;
+				next_motion_page = COMMAND_FRONT_GET_UP_MP;
+				start_integration = 0;
+			}
+		} else if ( bioloid_command == COMMAND_BACK_GET_UP && current_step == 7 ) 
+		{
+			// we would require integrated gyro measurements to exceed 70deg
+			if ( (int16)gyro_integral > -70 ) {
+				last_bioloid_command = bioloid_command;
+				bioloid_command = COMMAND_BACK_GET_UP;
+				next_motion_page = COMMAND_BACK_GET_UP_MP;
+				start_integration = 0;
+			}	
+		}
 	}
 	
 	// if walking, calculate joint offset values as per Robotis Task files	

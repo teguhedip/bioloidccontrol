@@ -102,11 +102,11 @@ void calculatePoseServoSpeeds(uint16 time)
 	}	
 	
 	// TEST: printf("\nCalculate Pose Speeds. Time = %i \n", time);
+	
 	// determine travel for each servo 
 	for (i=0; i<NUM_AX12_SERVOS; i++)
 	{
-		// TEST: 
-		// printf("\nDXL%i Current, Goal, Travel, Speed:", i+1);
+		// TEST: printf("\nDXL%i Current, Goal, Travel, Speed:", i+1);
 		
 		// process the joint offset values bearing in mind the different variable types
 		temp_goal = (int16) goal_pose[i] + joint_offset[i];
@@ -142,8 +142,7 @@ void calculatePoseServoSpeeds(uint16 time)
 		// we also use a minimum speed of 26 (5% of 530 the max value for 59RPM)
 		if (goal_speed[i] < 26) goal_speed[i] = 26;
 		
-		// TEST: 
-		// printf(" %u, %u, %u, %u", current_pose[i], goal_pose[i], travel[i], goal_speed[i]);
+		// TEST: printf(" %u, %u, %u, %u", current_pose[i], goal_pose[i], travel[i], goal_speed[i]);
 	}
 	
 }

@@ -9,7 +9,7 @@
  *   
  * Performs initializations and then runs main control loop
  *   
- * Version 0.6		18/01/2013 - static balancing and bug fixes
+ * Version 0.7		18/01/2013 - static balancing and bug fixes
  *
  * Written by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
@@ -110,6 +110,7 @@ volatile uint8 last_bioloid_command = 0;	// last command
 volatile bool  new_command = FALSE;			// flag that we got a new command
 volatile uint8 flag_receive_ready = 0;		// received complete command flag
 volatile uint8 command_sequence_buffer[50] = {0};	// command buffer for sequences
+volatile bool  major_alarm = FALSE;			// Major alarms that should stop execution
 
 // keep the current pose and joint offsets as global variables
 volatile int16 current_pose[NUM_AX12_SERVOS];
@@ -153,7 +154,7 @@ int main(void)
 	// enable interrupts
 	sei();
 	// print welcome message
-	printf("\nBioloid C Control V0.6\n");
+	printf("\nBioloid C Control V0.7\n");
 	printf("Press the START button on the CM-510 to continue.\n");
 	// reset the start button variable, something triggers the interrupt on start-up
 	start_button_pressed = FALSE;
@@ -202,7 +203,8 @@ int main(void)
 	// TIMING: timer4 = micros();
 
 	// main command loop (takes 28us when idle)
-    while(1)
+	// keeps executing unless we encounter a major alarm
+    while( !major_alarm )
     {
 		// Check if we received a new command
 		command_flag = serialReceiveCommand();		// takes 4ms if new command (largely because of printf)
@@ -235,6 +237,9 @@ int main(void)
 			sensor_process_flag = adc_processSensorData();
 			if ( command_flag == 0 && sensor_process_flag == 1 ) {
 				command_flag = 1;
+			} else if ( sensor_process_flag == 2 ) {
+				// if the sensor process flag = 2 it means low voltage emergency stop
+				major_alarm = TRUE;
 			}
 		}
 		
@@ -256,24 +261,26 @@ int main(void)
 				for (uint8 i=0; i<NUM_AX12_SERVOS; i++)	 { joint_offset[i] = 0; }
 			}			
 		}
-		// TEST: printf("\n Command %i, New %i, MP %i, Next MP %i ", bioloid_command, new_command, current_motion_page, next_motion_page);
 		
+		// TEST printf("\n Command %i, New %i, MP %i, Next MP %i ", bioloid_command, new_command, current_motion_page, next_motion_page);
 		// TIMING: timer2 = micros() - timer4 - timer1;
 		
-		// static balancing
-		if ( bioloid_command == COMMAND_BALANCE ) {
-// static balancing uses Kalman Filter or PID controller depending on availability of accelerometer
 #ifdef ACCEL_AND_ULTRASONIC
+		// static balancing
+		if ( bioloid_command == COMMAND_BALANCE && major_alarm != TRUE ) {
+// static balancing uses Kalman Filter or PID controller depending on availability of accelerometer
 			// first make sure the PID is turned on
 			if ( pid_getMode() != AUTOMATIC ) { pid_setMode(AUTOMATIC); }
 			staticRobotBalance();
-#endif
 		} else if ( pid_getMode() == 1 ) {
 			pid_setMode(MANUAL);
 		}		
-		
+#endif
+
 		// execute motion steps
-		executeMotionSequence();	// takes 2.1ms when executing a step during walking or 3.3ms if unpacking a new motion page
+		if ( major_alarm != TRUE ) {
+			executeMotionSequence();	// takes 2.1ms when executing a step during walking or 3.3ms if unpacking a new motion page
+		}
 		
 		// TIMING: timer3 = micros() - timer4 - timer1 - timer2;
 		// TIMING: printf("%lu, %lu, %lu, %i\n", timer1, timer2, timer3, sensor_flag);
