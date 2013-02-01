@@ -1,10 +1,11 @@
 /*
  * Serial.c - Functions for the serial port PC interface on the 
  * Robotis CM-510 controller. 
- * Can either use serial cable or Zig2Serial via Zig-110
+ * Can either use serial cable or Zig2Serial/RC-100 via Zig-110
  *
  * Based on the embedded C library provided by Robotis  
- * Version 0.6	18/01/2013
+ * Version 0.7	31/01/2013
+ *
  * Modified by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
  * 
@@ -464,6 +465,14 @@ void rc100_interpret_command ( void )
 			break;
 			case RC100_BTN_6:
 				bioloid_command = COMMAND_STOP;
+			break;
+			case RC100_BTN_U_AND_5:
+				bioloid_command = COMMAND_FRONT_GET_UP;
+				next_motion_page = COMMAND_FRONT_GET_UP_MP;
+			break;
+			case RC100_BTN_U_AND_6:
+				bioloid_command = COMMAND_BACK_GET_UP;
+				next_motion_page = COMMAND_BACK_GET_UP_MP;
 			break;
 			case RC100_BTN_U_AND_1:
 				bioloid_command = COMMAND_FRONT_GET_UP;

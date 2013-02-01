@@ -9,7 +9,7 @@
  *   
  * Performs initializations and then runs main control loop
  *   
- * Version 0.7		18/01/2013 - static balancing and bug fixes
+ * Version 0.7		31/01/2013 - RC-100 support and bug fixes
  *
  * Written by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
@@ -195,8 +195,12 @@ int main(void)
 	adc_init();
 
 	// print out default sensor values
+#ifdef GYRO_AND_DMS_ONLY
+	printf("\nBattery = %imV, Gyro X, Y Center = %i %i ", adc_battery_val, adc_gyrox_center, adc_gyroy_center);
+#endif
+#ifdef ACCEL_AND_ULTRASONIC
 	printf("\nBattery, Gyro X, Y Accel X, Y Center = %imV %i %i %i %i", adc_battery_val, adc_gyrox_center, adc_gyroy_center, adc_accelx_center, adc_accely_center);
-	
+#endif
 	// write out the command prompt
 	printf(	"\nReady for command.\n> ");
 
@@ -283,7 +287,7 @@ int main(void)
 		}
 		
 		// TIMING: timer3 = micros() - timer4 - timer1 - timer2;
-		// TIMING: printf("%lu, %lu, %lu, %i\n", timer1, timer2, timer3, sensor_flag);
+		// TIMING: printf("Timer 1 = %lu, 2 = %lu, 3 = %lu, SFlag = %i\n", timer1, timer2, timer3, sensor_flag);
 		// TIMING: timer4 = micros();
 
     } // end of main command loop
