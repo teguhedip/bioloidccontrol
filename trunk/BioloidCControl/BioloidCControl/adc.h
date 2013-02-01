@@ -45,6 +45,7 @@ void adc_init(void);
 // and also low battery alarms at this stage
 // Returns:  int flag = 0 no new command
 //           int flag = 1 new command
+//			 int flag = 2 major alarm
 int adc_processSensorData();
 
 // function that reads all the sensors from the main loop

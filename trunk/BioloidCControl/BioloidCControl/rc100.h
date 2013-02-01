@@ -48,6 +48,8 @@ extern "C" {
 #define RC100_BTN_D_AND_3	(RC100_BTN_D + RC100_BTN_3)
 #define RC100_BTN_L_AND_3	(RC100_BTN_L + RC100_BTN_3)
 #define RC100_BTN_R_AND_3	(RC100_BTN_R + RC100_BTN_3)
+#define RC100_BTN_U_AND_5	(RC100_BTN_U + RC100_BTN_5)
+#define RC100_BTN_U_AND_6	(RC100_BTN_U + RC100_BTN_6)
 
 #ifdef __cplusplus
 }
