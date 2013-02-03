@@ -466,14 +466,6 @@ void rc100_interpret_command ( void )
 			case RC100_BTN_6:
 				bioloid_command = COMMAND_STOP;
 			break;
-			case RC100_BTN_U_AND_5:
-				bioloid_command = COMMAND_FRONT_GET_UP;
-				next_motion_page = COMMAND_FRONT_GET_UP_MP;
-			break;
-			case RC100_BTN_U_AND_6:
-				bioloid_command = COMMAND_BACK_GET_UP;
-				next_motion_page = COMMAND_BACK_GET_UP_MP;
-			break;
 			case RC100_BTN_U_AND_1:
 				bioloid_command = COMMAND_FRONT_GET_UP;
 				next_motion_page = COMMAND_FRONT_GET_UP_MP;
