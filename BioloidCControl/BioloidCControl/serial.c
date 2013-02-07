@@ -68,6 +68,8 @@ volatile unsigned char gbSerialBufferTail = 0;
 static FILE *device;
 // RC-100 related variables
 volatile uint8 rc100_packet_count = 0;
+// command match variables
+char command[5], buffer[5];
 
 // global variables
 extern volatile uint8 bioloid_command;			// current command
@@ -79,6 +81,7 @@ extern volatile uint8 command_sequence_buffer[50];	// command buffer for sequenc
 
 // internal function prototypes
 void serial_interpret_command ( void );
+void command_match_string ( void );
 void rc100_interpret_command ( void );
 void serial_put_queue( unsigned char data );
 unsigned char serial_get_queue(void);
@@ -266,25 +269,17 @@ int serialReceiveCommand()
 // Re-assemble the 4-byte ASCII string into the matching command5
 void serial_interpret_command ( void )
 {
-	char c1, c2, c3, c4, command[6], buffer[6];
-	int match;
+	char c1 = ' ';
 
 	// we have a new command, get characters
-	c1 = serial_get_queue();
-	if ( c1 >= 'a' && c1 <= 'z' ) c1 = toupper(c1); // convert to upper case if required
-	command[0] = c1;
-	c2 = serial_get_queue();
-	if ( c2 >= 'a' && c2 <= 'z' ) c2 = toupper(c2); // convert to upper case if required
-	if( c2 == 0xFF ) c2 = ' ';						// pad with blanks to 4 characters
-	command[1] = c2;
-	c3 = serial_get_queue();
-	if ( c3 >= 'a' && c3 <= 'z' ) c3 = toupper(c3); // convert to upper case if required
-	if( c3 == 0xFF ) c3 = ' ';						// pad with blanks to 4 characters
-	command[2] = c3;
-	c4 = serial_get_queue();
-	if ( c4 >= 'a' && c4 <= 'z' ) c4 = toupper(c4); // convert to upper case if required
-	if( c4 == 0xFF ) c4 = ' ';						// pad with blanks to 4 characters
-	command[3] = c4;
+	for ( uint8 i=0; i<4; i++ )
+	{
+		// get next character from queue
+		c1 = serial_get_queue();
+		if ( c1 >= 'a' && c1 <= 'z' ) c1 = toupper(c1); // convert to upper case if required
+		if ( c1 == 0xFF && i>0 ) c1 = ' ';				// pad with blanks 
+		command[i] = c1;
+	}
 	command[4] = 0x00;			// finish the string
 
 	// flush the queue in case we received more than 4 bytes
@@ -294,6 +289,27 @@ void serial_interpret_command ( void )
 		serial_get_queue();
 	} while (serial_get_qstate() != 0);
 	
+	// see if the string matches a known command
+	command_match_string();
+	
+	// reset the flag
+	flag_receive_ready = 0;
+	
+	// finally echo the command and write new command prompt
+	if ( bioloid_command == COMMAND_MOTIONPAGE ) {
+		printf( "%s - MotionPageCommand %i\n> ", command, next_motion_page );
+	} else if( bioloid_command != COMMAND_NOT_FOUND ) {
+		printf( "%s - Command # %i\n> ", command, bioloid_command );
+	} else {
+		printf( "%s - Unknown Command! \n> ", command );
+	}
+}
+
+// function to match received strings to known commands
+void command_match_string ( void )
+{
+	int match;
+
 	// loop over all known commands to find a match
 	for (uint8 i=0; i<NUMBER_OF_COMMANDS; i++)
 	{
@@ -316,11 +332,11 @@ void serial_interpret_command ( void )
 			bioloid_command = COMMAND_NOT_FOUND;
 		}
 	}
-	
+		
 	// find the motion page associated with the command for non-walk commands
 	if ( bioloid_command != COMMAND_NOT_FOUND && bioloid_command >= COMMAND_WALK_READY )
 	{
-		// cross-check against the definitions in global.h
+	// cross-check against the definitions in global.h
 		switch ( bioloid_command )
 		{
 			case COMMAND_WALK_READY:
@@ -344,6 +360,9 @@ void serial_interpret_command ( void )
 			case COMMAND_RESET:
 			next_motion_page = COMMAND_RESET_MP;
 			break;
+			default:
+			next_motion_page = 0;
+			break;
 		}
 	}
 	// otherwise it's easier to calculate the motion page for walk commands
@@ -356,37 +375,26 @@ void serial_interpret_command ( void )
 	// before we leave we need to check for special case of Motion Page command
 	if( bioloid_command == COMMAND_NOT_FOUND )
 	{
-		if ( c1 == 'M' && (c2 >= '0' && c2 <= '9') )
+		if ( command[0] == 'M' && (command[1] >= '0' && command[1] <= '9') )
 		{
 			// we definitely have a motion page, find the number
 			bioloid_command = COMMAND_MOTIONPAGE;
-			next_motion_page = c2 - 48;	// converts ASCII to number
+			next_motion_page = command[1] - 48;	// converts ASCII to number
 			// check if next character is still a number
-			if ( c3 >= '0' && c3 <= '9' )
+			if ( command[2] >= '0' && command[2] <= '9' )
 			{
 				next_motion_page = next_motion_page * 10;
-				next_motion_page += (c3-48);
+				next_motion_page += (command[2]-48);
 			}
 			// check if next character is still a number
-			if ( c4 >= '0' && c4 <= '9' )
+			if ( command[3] >= '0' && command[3] <= '9' )
 			{
 				next_motion_page = next_motion_page * 10;
-				next_motion_page += (c4-48);
+				next_motion_page += (command[3]-48);
 			}
 		}
 	}
-	
-	// reset the flag
-	flag_receive_ready = 0;
-	
-	// finally echo the command and write new command prompt
-	if ( bioloid_command == COMMAND_MOTIONPAGE ) {
-		printf( "%c%c%c%c - MotionPageCommand %i\n> ", c1, c2, c3, c4, next_motion_page );
-	} else if( bioloid_command != COMMAND_NOT_FOUND ) {
-		printf( "%c%c%c%c - Command # %i\n> ", c1, c2, c3, c4, bioloid_command );
-	} else {
-		printf( "%c%c%c%c \nUnknown Command! \n> ", c1, c2, c3, c4 );
-	}
+
 }
 
 // verify validity of packet data 
