@@ -81,7 +81,7 @@ extern "C" {
 //						3. If required, add a motion page associated with the command below
 //						4. Edit serial.c and update the command string list
 //						5. Edit serial.c and update SerialReceiveCommand()
-#define NUMBER_OF_COMMANDS				25	// how many commands we recognize
+#define NUMBER_OF_COMMANDS				29	// how many commands we recognize
 #define COMMAND_STOP					0
 #define COMMAND_WALK_FORWARD			1
 #define COMMAND_WALK_BACKWARD			2
