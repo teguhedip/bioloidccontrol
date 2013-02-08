@@ -77,7 +77,7 @@ extern volatile uint8 last_bioloid_command;		// last command
 extern volatile uint8 flag_receive_ready;		// received complete command flag
 extern volatile uint8 current_motion_page;		// current motion page
 extern volatile uint8 next_motion_page;			// next motion page if we got new command
-extern volatile uint8 command_sequence_buffer[50];	// command buffer for sequences
+extern volatile uint8 command_sequence_buffer[50][2];	// command buffer for sequences
 
 // internal function prototypes
 void serial_interpret_command ( void );
@@ -270,6 +270,7 @@ int serialReceiveCommand()
 void serial_interpret_command ( void )
 {
 	char c1 = ' ';
+	uint8 c_count, s_count; 
 
 	// we have a new command, get characters
 	for ( uint8 i=0; i<4; i++ )
@@ -281,27 +282,97 @@ void serial_interpret_command ( void )
 		command[i] = c1;
 	}
 	command[4] = 0x00;			// finish the string
-
-	// flush the queue in case we received more than 4 bytes
-	do
-	{
-		// need to do it once even for 4 bytes to get rid of the 0xFF marking the end of string
-		serial_get_queue();
-	} while (serial_get_qstate() != 0);
 	
 	// see if the string matches a known command
 	command_match_string();
 	
-	// reset the flag
-	flag_receive_ready = 0;
+	// distinguish between command sequences and normal commands
+	if ( bioloid_command == COMMAND_SEQUENCE_START && serial_get_queue() == ',' )
+	{
+		// reset command counter
+		c_count = 0;
+		
+		// keep looking for commands until sequence ends
+		do
+		{	
+			// read the next command in the sequence
+			s_count = 0;
+			do
+			{
+				// get next character from queue
+				c1 = serial_get_queue();
+				if ( c1 >= 'a' && c1 <= 'z' ) c1 = toupper(c1); // convert to upper case if required
+				if ( c1 == ',' && s_count>0 ) {
+					for ( uint8 i=s_count; i<4; i++)	
+						{ command[i] = ' '; s_count = i; }	// pad with blanks
+				} else {
+					command[s_count] = c1;			// add character to string
+					s_count++;
+				}
+								
+			} while ( c1 != ',' && s_count < 4 && c1 != 0xFF );
+			command[s_count+1] = 0x00;				// finish the string
+				
+			// see if the string matches a known command
+			command_match_string();
+
+			// if it's a known command, add it to the sequence buffer
+			if ( bioloid_command != COMMAND_NOT_FOUND && bioloid_command != COMMAND_SEQUENCE_END )
+			{
+				command_sequence_buffer[c_count][0] = bioloid_command;
+				command_sequence_buffer[c_count][1] = next_motion_page;
+				// increase the command counter
+				c_count++;
+			}
+			
+		} while ( bioloid_command != COMMAND_SEQUENCE_END );
+		
+		// reduce command counter by 1 (it counts SQND)
+		c_count--;
+
+		// flush the queue in case we received unknown commands or separators
+		do
+		{
+			// need to do it once even for 4 bytes to get rid of the 0xFF marking the end of string
+			serial_get_queue();
+		} while (serial_get_qstate() != 0);
+		
+		// extract first command in sequence
+		bioloid_command = command_sequence_buffer[0][0];
+		next_motion_page = command_sequence_buffer[0][1];			
+		
+		// reset the flag
+		flag_receive_ready = 0;
+		
+		// echo the sequence
+		printf( "Command/MP Sequence: " );
+		for ( uint8 i=0; i<c_count; i++ )
+		{
+			printf("%i/%i, ", command_sequence_buffer[i][0], command_sequence_buffer[i][1] );
+		}
+		printf("%i/%i\n", command_sequence_buffer[c_count][0], command_sequence_buffer[c_count][1] );
+	} 
+	else 
+	{
+		// normal command, not a sequence
+		// flush the queue in case we received more than 4 bytes
+		do
+		{
+			// need to do it once even for 4 bytes to get rid of the 0xFF marking the end of string
+			serial_get_queue();
+		} while (serial_get_qstate() != 0);
+
+		// reset the flag
+		flag_receive_ready = 0;
 	
-	// finally echo the command and write new command prompt
-	if ( bioloid_command == COMMAND_MOTIONPAGE ) {
-		printf( "%s - MotionPageCommand %i\n> ", command, next_motion_page );
-	} else if( bioloid_command != COMMAND_NOT_FOUND ) {
-		printf( "%s - Command # %i\n> ", command, bioloid_command );
-	} else {
-		printf( "%s - Unknown Command! \n> ", command );
+		// finally echo the command and write new command prompt
+		if ( bioloid_command == COMMAND_MOTIONPAGE ) {
+			printf( "%s - MotionPageCommand %i\n> ", command, next_motion_page );
+		} else if( bioloid_command != COMMAND_NOT_FOUND ) {
+			printf( "%s - Command # %i\n> ", command, bioloid_command );
+		} else {
+			printf( "%s - Unknown Command! \n> ", command );
+		}
 	}
 }
 
