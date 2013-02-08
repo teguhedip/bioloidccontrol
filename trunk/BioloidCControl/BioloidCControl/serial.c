@@ -325,7 +325,7 @@ void serial_interpret_command ( void )
 				c_count++;
 			}
 			
-		} while ( bioloid_command != COMMAND_SEQUENCE_END );
+		} while ( bioloid_command != COMMAND_SEQUENCE_END && c_count <= 50 );
 		
 		// reduce command counter by 1 (it counts SQND)
 		c_count--;
