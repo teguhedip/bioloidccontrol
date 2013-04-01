@@ -29,14 +29,14 @@
 #include "clock.h"
 
 // define the possible states for executeMotionSequence
+#define MOTION_STOPPED		0
 #define STEP_IN_MOTION		1
 #define STEP_IN_PAUSE		2
 #define STEP_FINISHED		3
 #define PAUSE_FINISHED		4
 #define	PAGE_FINISHED		5
 #define MOTION_ALARM		6
-#define MOTION_STOPPED		7
-#define ROBOT_SLIPPED		8
+#define ROBOT_SLIPPED		7
 
 // and create the variables that guide these functions
 uint8 motion_state = 7;					// motion state as per above definitions
@@ -349,7 +349,8 @@ void motionPageInit()
 // pages defined in motion.h
 // It implements a finite state machine to know what it is doing and what to do next
 // Code is meant to be reentrant so it can easily be converted to a task with a RTOS
-void executeMotionSequence()
+// Returns:		motion_state
+uint8 executeMotionSequence()
 {
 	uint8 moving_flag, temp1;
 	int error_status, comm_status, left_right_step;
@@ -367,7 +368,7 @@ void executeMotionSequence()
 				motion_state = STEP_FINISHED;
 			} else {
 				// play time isn't finished yet, return
-				return;
+				return motion_state;
 			}
 		} else {				
 			// last state was step in motion - check if finished
@@ -378,7 +379,7 @@ void executeMotionSequence()
 				step_finish_time = millis();
 			} else {
 				// step isn't finished yet, return
-				return;
+				return motion_state;
 			}
 		}		
 	} else if( motion_state == STEP_IN_PAUSE ) {
@@ -389,7 +390,7 @@ void executeMotionSequence()
 			motion_state = PAUSE_FINISHED;
 		} else {
 			// pause isn't finished yet, return
-			return;
+			return motion_state;
 		}		
 	}
 	
@@ -407,7 +408,7 @@ void executeMotionSequence()
 				comm_status = dxl_write_byte(BROADCAST_ID, DXL_TORQUE_ENABLE, 0);
 				printf("\nexecuteMotionSequence Alarm ID%i - Error Code %i\n", AX12_IDS[i], error_status);
 				motion_state = MOTION_ALARM;
-				return;
+				return motion_state;
 			}
 		}	
 		// no alarm has occurred, read back current pose (takes 6ms)
@@ -442,7 +443,7 @@ void executeMotionSequence()
 			// yes, reset flag and change motion state and then return to not complicate things
 			exit_flag = 0;
 			motion_state = MOTION_STOPPED;
-			return;
+			return motion_state;
 		}
 		
 		// we have finished the current page - determine the next motion page
@@ -452,7 +453,7 @@ void executeMotionSequence()
 			if ( CurrentMotion.ExitPage == 0 ) {
 				// no exit page, stop
 				motion_state = MOTION_STOPPED;
-				return;
+				return motion_state;
 			} else {
 				// need to execute an Exit Page before stopping		
 				current_motion_page = CurrentMotion.ExitPage;
@@ -471,7 +472,7 @@ void executeMotionSequence()
 					// no exit page
 					current_motion_page = 0;
 					motion_state = MOTION_STOPPED;
-					return;
+					return motion_state;
 				} else {
 					// need to execute an Exit Page before new command		
 					current_motion_page = CurrentMotion.ExitPage;
@@ -488,7 +489,7 @@ void executeMotionSequence()
 			motion_state = STEP_IN_MOTION;
 			// can go straight to executing step 1 since we have executed this page before
 			step_start_time = executeMotionStep(current_step);
-			return;
+			return motion_state;
 		} 
 		// Option 6 - switch to NextPage motion page
 		else if ( CurrentMotion.NextPage > 0 && CurrentMotion.NextPage <= NUM_MOTION_PAGES )
@@ -499,7 +500,7 @@ void executeMotionSequence()
 		else
 		{
 			motion_state = MOTION_STOPPED;
-			return;
+			return motion_state;
 		}
 
 		// in Options 1,2,6 above we had a change of motion page - start execution
@@ -517,7 +518,7 @@ void executeMotionSequence()
 		}
 		
 		// either way we are finished here - return
-		return;
+		return motion_state;
 	}	
 	
 	// now we can deal with state changes during page execution
@@ -529,7 +530,7 @@ void executeMotionSequence()
 			// set the timer for the pause
 			pause_start_time = millis();
 			motion_state = STEP_IN_PAUSE;
-			return;
+			return motion_state;
 		} else {
 			// no pause required, go straight to executing next step
 			motion_state = PAUSE_FINISHED;
@@ -553,7 +554,7 @@ void executeMotionSequence()
 			motion_state = MOTION_STOPPED;
 			current_motion_page = 0;
 		}
-		return;
+		return motion_state;
 	}
 	
 	// Option 7 - Respond to new command - set associated motion page
@@ -622,7 +623,7 @@ void executeMotionSequence()
 	} 
 	// Option 8 - Nothing to do - keep waiting for new command
 	else {
-		return;
+		return motion_state;
 	}
 
 }
@@ -873,6 +874,6 @@ int executeMotion(int StartPage)
 	// execute the exit page if it exists
 	if (NextPage != 0)
 	{
-		executeMotionSequence(NextPage);
+		executeMotion(NextPage);
 	}
 }
