@@ -9,7 +9,7 @@
  *   
  * Performs initializations and then runs main control loop
  *   
- * Version 0.7		31/01/2013 - RC-100 support and bug fixes
+ * Version 0.8		1/03/2013 - command sequences
  *
  * Written by Peter Lanius
  * Please send suggestions and bug fixes to PeterLanius@gmail.com
@@ -94,22 +94,25 @@ volatile uint8 adc_sensor_enable[ADC_CHANNELS] = {1, 1, 1, 1, 1, 1};
 volatile uint8 adc_sensor_enable[ADC_CHANNELS] = {0, 0, 1, 1, 1, 0}; 
 #endif
 volatile int16 adc_sensor_val[ADC_CHANNELS] = {0, 0, 0, 0, 0, 0}; 	// array of sensor values
-volatile uint16 adc_battery_val = 0;	// battery voltage in millivolts
-volatile uint16 adc_gyrox_center = 0;	// gyro x center value
-volatile uint16 adc_gyroy_center = 0;	// gyro y center value
-volatile int16 adc_accelx = 0;			// accelerometer x value
-volatile int16 adc_accely = 0;			// accelerometer y value
-volatile uint16 adc_accelx_center = 0;	// accelerometer x center value
-volatile uint16 adc_accely_center = 0;	// accelerometer y center value
+volatile uint16 adc_battery_val = 0;		// battery voltage in millivolts
+volatile uint16 adc_gyrox_center = 0;		// gyro x center value
+volatile uint16 adc_gyroy_center = 0;		// gyro y center value
+volatile int16 adc_accelx = 0;				// accelerometer x value
+volatile int16 adc_accely = 0;				// accelerometer y value
+volatile uint16 adc_accelx_center = 0;		// accelerometer x center value
+volatile uint16 adc_accely_center = 0;		// accelerometer y center value
 volatile uint16 adc_ultrasonic_distance = 0;	// ultrasonic distance sensor value
-volatile uint16 adc_dms_distance = 0;   // DMS sensor distance value
+volatile uint16 adc_dms_distance = 0;		// DMS sensor distance value
 
 // Global variables related to the finite state machine that governs execution
 volatile uint8 bioloid_command = 0;			// current command
 volatile uint8 last_bioloid_command = 0;	// last command
 volatile bool  new_command = FALSE;			// flag that we got a new command
 volatile uint8 flag_receive_ready = 0;		// received complete command flag
+volatile uint8 flag_motion_sequence = 0;	// received motion sequence flag
 volatile uint8 command_sequence_buffer[50][2] = {0};	// command buffer for sequences
+volatile uint8 command_sequence_counter = 0;// marks current position in sequence buffer
+volatile uint8 command_sequence_length = 0;	// number of commands in sequence buffer
 volatile bool  major_alarm = FALSE;			// Major alarms that should stop execution
 
 // keep the current pose and joint offsets as global variables
@@ -137,7 +140,11 @@ static inline void delay_ms(uint16 count) {
 int main(void)
 {
 	// local variables
-	int	sensor_flag, command_flag, comm_status, sensor_process_flag, obstacle_flag;
+	int		sensor_flag, command_flag, comm_status, sensor_process_flag, obstacle_flag, wait_flag;
+	unsigned long wait_timer = 0; 
+	unsigned long wait_time = 0;
+	uint8	motion_flag = 0;
+	
 	// TIMING: unsigned long timer1, timer2, timer3, timer4;
 	
 	// Initialization Routines
@@ -150,11 +157,12 @@ int main(void)
 	
 	// initialize the clock
 	clock_init();
+	wait_flag = 0;
 	
 	// enable interrupts
 	sei();
 	// print welcome message
-	printf("\nBioloid C Control V0.7\n");
+	printf("\nBioloid C Control V0.8\n");
 	printf("Press the START button on the CM-510 to continue.\n");
 	// reset the start button variable, something triggers the interrupt on start-up
 	start_button_pressed = FALSE;
@@ -193,6 +201,8 @@ int main(void)
 	// initialize the ADC and take default readings
 	delay_ms(4000);			// wait 4s for gyros to stabilize
 	adc_init();
+	sensor_process_flag = 0;
+	sensor_flag = 0;
 
 	// print out default sensor values
 #ifdef GYRO_AND_DMS_ONLY
@@ -214,6 +224,59 @@ int main(void)
 		command_flag = serialReceiveCommand();		// takes 4ms if new command (largely because of printf)
 
 		// TIMING: timer1 = micros() - timer4;
+		
+		// see if we are in a wait command
+		if ( bioloid_command == COMMAND_WAIT_MILLISECONDS || bioloid_command == COMMAND_WAIT_SECONDS )
+		{
+			// first look if we should continue waiting
+			if ( wait_flag == 1 )
+			{
+				// check timer 
+				if ( millis() - wait_timer > wait_time )
+				{
+					// wait time is finished - reset the wait flag, timer and time
+					wait_flag = 0;
+					wait_timer = 0;
+					wait_time = 0;
+					// read next command from command sequence 
+					if ( flag_motion_sequence == 1 )
+					{
+						bioloid_command = command_sequence_buffer[command_sequence_counter][0];
+						next_motion_page = command_sequence_buffer[command_sequence_counter][1];
+						// update pointer if there are more commands left
+						if ( command_sequence_counter < command_sequence_length ) { 
+							command_sequence_counter++; 
+						} else {
+							// sequence is finished, reset all sequence related variables
+							flag_motion_sequence = 0;
+							command_sequence_counter = 0;
+							command_sequence_length = 0;
+							bioloid_command = COMMAND_STOP;
+						}
+					}
+				}
+			}
+			
+			if ( command_flag == 1 && wait_flag == 0 ) {
+				// wait command has only just been received, calculate wait time
+				wait_timer = millis();
+				command_flag = 0;
+				wait_flag = 1;
+				wait_time = next_motion_page;
+			} 
+			else if ( command_flag == 1 && wait_flag == 1 )
+			{
+				// wait command is still in progress but new command has been received
+				// check for STOP, otherwise ignore
+				if ( bioloid_command == COMMAND_STOP )
+				{
+					// reset the wait flag, timer and time
+					wait_flag = 0;
+					wait_timer = 0;
+					wait_time = 0;
+				}
+			}
+		} 
 		
 		// check if start button has been pressed and we need to do emergency stop
 		if ( start_button_pressed && bioloid_command != COMMAND_STOP )
@@ -240,6 +303,7 @@ int main(void)
 			// new sensor data - process and update command flag if necessary
 			sensor_process_flag = adc_processSensorData();
 			if ( command_flag == 0 && sensor_process_flag == 1 ) {
+				// robot has slipped, front/back getup command has been issued
 				command_flag = 1;
 			} else if ( sensor_process_flag == 2 ) {
 				// if the sensor process flag = 2 it means low voltage emergency stop
@@ -283,7 +347,7 @@ int main(void)
 
 		// execute motion steps
 		if ( major_alarm != TRUE ) {
-			executeMotionSequence();	// takes 2.1ms when executing a step during walking or 3.3ms if unpacking a new motion page
+			motion_flag = executeMotionSequence();	// takes 2.1ms when executing a step during walking or 3.3ms if unpacking a new motion page
 		}
 		
 		// TIMING: timer3 = micros() - timer4 - timer1 - timer2;

@@ -75,9 +75,12 @@ char command[5], buffer[5];
 extern volatile uint8 bioloid_command;			// current command
 extern volatile uint8 last_bioloid_command;		// last command
 extern volatile uint8 flag_receive_ready;		// received complete command flag
+extern volatile uint8 flag_motion_sequence;		// received motion sequence flag
 extern volatile uint8 current_motion_page;		// current motion page
 extern volatile uint8 next_motion_page;			// next motion page if we got new command
 extern volatile uint8 command_sequence_buffer[50][2];	// command buffer for sequences
+extern volatile uint8 command_sequence_counter;	// marks current position in sequence buffer
+extern volatile uint8 command_sequence_length;	// number of commands in sequence buffer
 
 // internal function prototypes
 void serial_interpret_command ( void );
@@ -329,6 +332,7 @@ void serial_interpret_command ( void )
 		
 		// reduce command counter by 1 (it counts SQND)
 		c_count--;
+		command_sequence_length = c_count;
 
 		// flush the queue in case we received unknown commands or separators
 		do
@@ -339,7 +343,9 @@ void serial_interpret_command ( void )
 		
 		// extract first command in sequence
 		bioloid_command = command_sequence_buffer[0][0];
-		next_motion_page = command_sequence_buffer[0][1];			
+		next_motion_page = command_sequence_buffer[0][1];
+		// set pointer to next command
+		command_sequence_counter = 1;			
 		
 		// reset the flag
 		flag_receive_ready = 0;
@@ -464,6 +470,43 @@ void command_match_string ( void )
 				next_motion_page += (command[3]-48);
 			}
 		}
+	}
+
+	// check for special case of wait commands
+	if( bioloid_command == COMMAND_NOT_FOUND )
+	{
+		if ( command[0] == 'W' && (command[1] >= '0' && command[1] <= '9') )
+		{
+			// we have a wait milliseconds command, find the number
+			bioloid_command = COMMAND_WAIT_MILLISECONDS;
+			next_motion_page = command[1] - 48;	// converts ASCII to number
+			// check if next character is still a number
+			if ( command[2] >= '0' && command[2] <= '9' )
+			{
+				next_motion_page = next_motion_page * 10;
+				next_motion_page += (command[2]-48);
+			}
+			// check if next character is still a number
+			if ( command[3] >= '0' && command[3] <= '9' )
+			{
+				next_motion_page = next_motion_page * 10;
+				next_motion_page += (command[3]-48);
+			}
+		}		
+	} 
+	else if ( command[0] == 'W' && command[1] == 'S' && (command[2] >= '0' && command[2] <= '9') )
+	{
+		// we have a wait seconds command, find the number
+		bioloid_command = COMMAND_WAIT_SECONDS;
+		next_motion_page = command[2] - 48;	// converts ASCII to number
+		// check if next character is still a number
+		if ( command[3] >= '0' && command[3] <= '9' )
+		{
+			next_motion_page = next_motion_page * 10;
+			next_motion_page += (command[3]-48);
+		}
+		// convert to milliseconds
+		next_motion_page = 1000 * next_motion_page;
 	}
 
 }

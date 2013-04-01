@@ -50,7 +50,8 @@ int executeMotion(int StartPage);
 // pages defined in motion.h
 // It implements a finite state machine to know what it is doing and what to do next
 // Code is meant to be reentrant so it can easily be converted to a task with a RTOS
-void executeMotionSequence();
+// Returns:		motion_state
+uint8 executeMotionSequence();
 
 // This function executes the exit page motion for the  
 // current motion page
