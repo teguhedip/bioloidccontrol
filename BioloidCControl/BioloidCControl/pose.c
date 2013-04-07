@@ -31,6 +31,7 @@ extern const uint8 AX12Servos[MAX_AX12_SERVOS];
 extern const uint8 AX12_IDS[NUM_AX12_SERVOS];
 // should keep the current pose in a global array
 extern volatile int16 current_pose[NUM_AX12_SERVOS];
+extern volatile uint8 motion_step_servos_moving[MAX_MOTION_STEPS][NUM_AX12_SERVOS];
 // joint offset values
 extern volatile int16 joint_offset[NUM_AX12_SERVOS];
 
@@ -41,7 +42,6 @@ const uint16 InitialPlayTime = 400; // 0.4s is fast enough
 // we keep shared variables for goal pose and speed
 uint16 goal_pose[NUM_AX12_SERVOS];
 uint16 goal_speed[NUM_AX12_SERVOS];
-uint16 last_goal[NUM_AX12_SERVOS];
 
 
 // the new implementation of AVR libc does not allow variables passed to _delay_ms
@@ -52,12 +52,30 @@ static inline void delay_ms(uint8 count) {
 }
 
 // read in current servo positions to determine current pose
-void readCurrentPose()
+// takes between 260us and 456us per servo (mainly 260us or 300us)
+// all up takes 5-6ms
+// Inputs:	(uint8)		read mode - all or only moving servos
+//			(uint8)		current step
+void readCurrentPose(uint8 read_mode, uint8 step)
 {
-	// loop over all possible actuators
-	for(int i=0; i<NUM_AX12_SERVOS; i++) {
-		current_pose[i] = dxl_read_word( AX12_IDS[i], DXL_PRESENT_POSITION_L );
+	if (read_mode == READ_ALL)
+	{
+		// loop over all possible actuators
+		for(int i=0; i<NUM_AX12_SERVOS; i++) {
+			current_pose[i] = dxl_read_word( AX12_IDS[i], DXL_PRESENT_POSITION_L );
+		}
+	} 
+	else
+	{
+		// read only the servos that moved in this step
+		for(int i=0; i<NUM_AX12_SERVOS; i++) {
+			if ( motion_step_servos_moving[step][i] > 0 )
+			{
+				current_pose[i] = dxl_read_word( AX12_IDS[i], DXL_PRESENT_POSITION_L );
+			}
+		}
 	}
+	
 }
 
 // Function to wait out any existing servo movement
@@ -98,7 +116,7 @@ void calculatePoseServoSpeeds(uint16 time)
 
 	// read the current pose only if we are not walking (no time)
 	if( walk_getWalkState() == 0 ) {
-		readCurrentPose();		// takes 6ms
+		readCurrentPose(READ_ALL, 0);		// takes 6ms
 	}	
 	
 	// TEST: printf("\nCalculate Pose Speeds. Time = %i \n", time);
@@ -198,7 +216,7 @@ int moveToGoalPose(uint16 time, uint16 goal[], uint8 wait_flag)
 			}
 		}	
 		// all ok, read back current pose
-		readCurrentPose();	
+		readCurrentPose(READ_ALL, 0);	
 	}	
 	return 0;
 }

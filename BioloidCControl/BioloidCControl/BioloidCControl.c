@@ -109,15 +109,15 @@ volatile uint8 bioloid_command = 0;			// current command
 volatile uint8 last_bioloid_command = 0;	// last command
 volatile bool  new_command = FALSE;			// flag that we got a new command
 volatile uint8 flag_receive_ready = 0;		// received complete command flag
-volatile uint8 flag_motion_sequence = 0;	// received motion sequence flag
-volatile uint8 command_sequence_buffer[50][2] = {0};	// command buffer for sequences
-volatile uint8 command_sequence_counter = 0;// marks current position in sequence buffer
-volatile uint8 command_sequence_length = 0;	// number of commands in sequence buffer
 volatile bool  major_alarm = FALSE;			// Major alarms that should stop execution
 
 // keep the current pose and joint offsets as global variables
 volatile int16 current_pose[NUM_AX12_SERVOS];
 volatile int16 joint_offset[NUM_AX12_SERVOS];
+// arrays that indicate which servos move in each step/motion page
+volatile uint8 motion_step_servos_moving[MAX_MOTION_STEPS][NUM_AX12_SERVOS];
+volatile uint8 motion_servos_moving[NUM_AX12_SERVOS];
+
 // and also the current and next motion pages
 volatile uint8 current_motion_page = 0;
 volatile uint8 next_motion_page = 0;		// next motion page if we got new command
