@@ -25,9 +25,15 @@
 // define more readable constants for moveToGoalPose wait_flag
 #define WAIT_FOR_POSE_FINISH		1
 #define DONT_WAIT_FOR_POSE_FINISH	0
+#define READ_ALL					1
+#define READ_MOVING					0
 
-// read in current servo positions to the pose. 
-void readCurrentPose();
+// read in current servo positions to determine current pose
+// takes between 260us and 456us per servo (mainly 260us or 300us)
+// all up takes 5-6ms for READ_ALL mode
+// Inputs:	(uint8)		read mode - all or only moving servos
+//			(uint8)		current step
+void readCurrentPose(uint8 read_mode, uint8 step);
 
 // Function to wait out any existing servo movement
 void waitForPoseFinish();

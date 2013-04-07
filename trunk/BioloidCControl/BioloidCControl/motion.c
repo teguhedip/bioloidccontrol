@@ -62,6 +62,8 @@ extern uint8 current_step;						// number of the current motion page step
 
 // should keep the current pose in a global array
 extern int16 current_pose[NUM_AX12_SERVOS];
+extern volatile uint8 motion_step_servos_moving[MAX_MOTION_STEPS][NUM_AX12_SERVOS];
+extern volatile uint8 motion_servos_moving[NUM_AX12_SERVOS];
 
 // table of pointers to the motion pages
 uint8 * motion_pointer[NUM_MOTION_PAGES+1];
@@ -412,7 +414,7 @@ uint8 executeMotionSequence()
 			}
 		}	
 		// no alarm has occurred, read back current pose (takes 6ms)
-		readCurrentPose();	
+		readCurrentPose(READ_ALL, 0);	
 	}
 	
 	// We also need to check if we received a RESET command after alarm shutdown
@@ -702,6 +704,58 @@ void unpackMotion(int StartPage)
 			CurrentMotion.PlayTime[s] = 10 * (CurrentMotion.PlayTime[s]/CurrentMotion.SpeedRate10);
 		}		
 	}		
+	
+	// Analyse which joints are moving during each step (to save time later)
+	if ( CurrentMotion.Steps > 1 )
+	{
+		// start with step 1 based on current pose values
+		for (i=0; i<NUM_AX12_SERVOS; i++)
+		{
+			if( abs(CurrentMotion.StepValues[0][i] - current_pose[i]) <= 3  )
+			motion_step_servos_moving[0][i] = 1;
+		}
+		// now analyse the remaining motion steps
+		for (s=1; s<CurrentMotion.Steps; s++)
+		{
+			// compare with previous step
+			for (i=0; i<NUM_AX12_SERVOS; i++)
+			{
+				// compare each servo value within +/-3 steps (equivalent to +/- 0.9deg)
+				if( abs(CurrentMotion.StepValues[s][i] - CurrentMotion.StepValues[s-1][i]) <= 3 )
+					motion_step_servos_moving[s][i] = 0;
+				else
+					motion_step_servos_moving[s][i] = 1;
+			}
+		}
+		
+		// aggregate these to see which servos are moving at all
+		for (i=0; i<NUM_AX12_SERVOS; i++)
+		{
+			// reset the value first
+			motion_servos_moving[i] = 0;
+			
+			// add up the step values from above
+			for (s=1; s<CurrentMotion.Steps; s++)
+			{
+				motion_servos_moving[i] += motion_step_servos_moving[s][i];
+			}
+			
+			// normalise values to 1
+			if ( motion_servos_moving[i] > 0 ) motion_servos_moving[i] = 1;
+		}
+	} else {
+		// only 1 Motion Step in current page
+		// can only be analysed base don current pose values
+		for (i=0; i<NUM_AX12_SERVOS; i++)
+		{
+			if( abs(CurrentMotion.StepValues[0][i] - current_pose[i]) <= 3  )
+			{
+				// set both arrays
+				motion_step_servos_moving[0][i] = 1;
+				motion_servos_moving[i] = 1;
+			}			
+		}
+	}
 }
 
 // This function initiates the execution of a motion step in the given motion page
